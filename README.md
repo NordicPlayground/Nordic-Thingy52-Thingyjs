@@ -11,7 +11,7 @@ This is work in progress, and for now this repository will help you connect to a
 
 ### Get started
 
-- Clone or download this repository, or just copy `js/thingy.js` into your own project.
+- Clone or download this repository.
 - If you've used this repository, you can open `index.html` in a supported browser and open the console (ctrl + shift + J or cmd + alt + J). 
 - Turn on your Thingy:52. 
 - Click the "Connect" button found in `index.html`.
