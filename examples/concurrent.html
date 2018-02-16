@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Thingy:52 Web Bluetooth</title>
+  </head>
+  <body>
+    <h1>Concurrent connections example</h1>
+    <button id="connectBtn_1">Connect Thingy 1</button>
+    <button id="connectBtn_2">Connect Thingy 2</button>
+    <div id="temperature_1"></div>
+    <div id="temperature_2"></div>
+    <script type="module">
+      import Thingy from "./index.js";
+      
+      const thingy_1 = new Thingy({logEnabled: true});
+      const thingy_2 = new Thingy({logEnabled: true});
+
+      async function start(device, eventHandler) {
+        await device.connect();
+        await device.temperature.start();
+        await device.addEventListener("temperature", eventHandler);
+      }
+
+      function onTemperatureUpdate_1(data) {
+        const el = document.querySelector("#temperature_1");
+        el.innerHTML = `Temperature 1: ${data.detail.value} ${data.detail.unit}`;
+      }
+
+      function onTemperatureUpdate_2(data) {
+        const el = document.querySelector("#temperature_2");
+        el.innerHTML = `Temperature 2: ${data.detail.value} ${data.detail.unit}`;
+      }
+      
+      document.querySelector("#connectBtn_1").addEventListener("click", async () => {
+          start(thingy_1, onTemperatureUpdate_1);
+      });
+
+      document.querySelector("#connectBtn_2").addEventListener("click", async () => {
+        start(thingy_2, onTemperatureUpdate_2);
+      });
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Thingy:52 Web Bluetooth</title>
+  </head>
+  <body>
+    <h1>Thingy:52 temperature reading example</h1>
+    <button id="connectBtn">Connect</button>
+    <div id="temperature"></div>
+    <script type="module">
+      
+      import Thingy from "./index.js";
+
+      const thingy = new Thingy({logEnabled: true});
+
+      async function start(device) {
+        await device.connect();
+        await device.temperature.start();
+        await device.addEventListener("temperature", logData);
+      }
+
+      function logData(data) {
+        const el = document.querySelector("#temperature");
+        el.innerHTML = `Temperature: ${data.detail.value} ${data.detail.unit}`;
+      }
+      
+      document.querySelector("#connectBtn").addEventListener("click", async () => {
+          start(thingy);
+      });
+    </script>
+  </body>
+</html>

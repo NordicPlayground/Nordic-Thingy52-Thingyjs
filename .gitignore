@@ -1,0 +1,5 @@
+.eslintrc.json
+node_modules/
+build/
+npm-debug.log
+ts/

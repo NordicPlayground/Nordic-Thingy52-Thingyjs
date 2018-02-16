@@ -1,0 +1,32 @@
+{
+  "name": "thingy52_web_bluetooth",
+  "version": "1.0.0",
+  "description": "API for connecting to and interacting with Nordic Semiconductor's Thingy:52 in the browser",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NordicPlayground/Nordic-Thingy52-Thingyjs.git"
+  },
+  "author": "Nordic Semiconductor ASA",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "bugs": {
+    "url": "https://github.com/NordicPlayground/Nordic-Thingy52-Thingyjs/issues"
+  },
+  "homepage": "https://github.com/NordicPlayground/Nordic-Thingy52-Thingyjs#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/text-encoding": "0.0.32",
+    "@types/web-bluetooth": "0.0.4",
+    "babel-eslint": "^8.1.1",
+    "eslint": "^4.14.0",
+    "eslint-config-google": "^0.9.1",
+    "typescript": "^2.6.2"
+  }
+}
