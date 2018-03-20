@@ -36,6 +36,7 @@ class FeatureOperations extends EventTarget {
     super();
     this.device = device;
     this.type = type || this.constructor.name;
+    this.latestReadings = new Map();
   }
 
   async connect() {
@@ -82,6 +83,13 @@ class FeatureOperations extends EventTarget {
 
   notifyError(error) {
     console.error(`The ${this.type} feature has reported an error: ${error}`);
+
+    const ce = new CustomEvent("error", {detail: {
+      feature: this.type,
+      error
+    }});
+
+    this.device.dispatchEvent(ce);
   }
 
   async _read(ch = "default", returnRaw = false) {
@@ -154,7 +162,7 @@ class FeatureOperations extends EventTarget {
       }
     } else {
       window.busyGatt = false;
-      const e = new Error(`Could not write to the ${this.type} feature, as Thingy only allows one concurrent BLE operation`);
+      const e = new Error(`Could not write to the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
       throw e;
     }
   }
@@ -185,6 +193,15 @@ class FeatureOperations extends EventTarget {
           ce = new CustomEvent("verifyReaction", {detail: {feature: this.type, data: decodedData}});
           this.dispatchEvent(ce);
         } else {
+          this.latestReadings.clear();
+
+          for (let elem in decodedData) {
+            this.latestReadings.set(elem, decodedData[elem]);
+          }
+
+          const e = new Event("reading");
+          this.dispatchEvent(e);
+
           ce = new CustomEvent("characteristicvaluechanged", {detail: {feature: this.type, data: decodedData}});
           this.device.dispatchEvent(ce);
         }
@@ -226,7 +243,7 @@ class FeatureOperations extends EventTarget {
           }
         }
       } else {
-        const e = Error(`Could not write to  ${this.type} feature, as Thingy only allows one concurrent BLE operation`);
+        const e = Error(`Could not start the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
         throw e;
       }
     }

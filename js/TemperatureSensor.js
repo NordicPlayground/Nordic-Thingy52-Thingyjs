@@ -50,7 +50,7 @@ class TemperatureSensor extends FeatureOperations {
 
   decodeTemperature(data) {
     try {
-      const integer = data.getUint8(0);
+      const integer = data.getInt8(0);
       const decimal = data.getUint8(1);
       const temperature = integer + decimal / 100;
 
