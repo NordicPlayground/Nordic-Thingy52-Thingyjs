@@ -29,6 +29,7 @@
   OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import AdvertisingParametersService from "./AdvertisingParametersService.js";
 import EventTarget from "./EventTarget.js";
 import MicrophoneSensor from "./MicrophoneSensor.js";
 import MTUService from "./MTUService.js";
@@ -128,6 +129,7 @@ class Thingy extends EventTarget {
 
     this.addEventListener("characteristicvaluechanged", this.receiveReading);
 
+    this.advertisingParametersService = new AdvertisingParametersService(this);
     this.microphone = new MicrophoneSensor(this);
     this.mtu = new MTUService(this);
     this.name = new NameService(this);

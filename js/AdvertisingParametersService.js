@@ -71,28 +71,49 @@ class AdvertisingParametersService extends FeatureOperations {
     }
   }
 
-  encodeAdvertisingParam(params) {
+  async encodeAdvertisingParam(params) {
     try {
-      if (typeof params !== "object" || params.interval === undefined || params.timeout === undefined) {
-        const error = new RangeError("The argument has to be an object with key/value pairs interval' and 'timeout': {interval: someInterval, timeout: someTimeout}");
+
+      if (typeof params !== "object") {
+        const error = new Error("The argument has to be an object.");
         throw error;
       }
 
-      // Interval is in units of 0.625 ms.
-      const interval = params.interval * 1.6;
-      const timeout = params.timeout;
+      if ((params.interval === undefined) && (params.timeout === undefined)) {
+        const error = new RangeError("The argument has to be an object with at least one of the properties 'interval' or 'timeout': {interval: someInterval, timeout: someTimeout}");
+        throw error;
+      }
+
+      let interval = params.interval;
+      let timeout = params.timeout;
 
       // Check parameters
-      if (interval < 32 || interval > 8000) {
-        const error = new RangeError("The advertising interval must be within the range of 20 ms to 5 000 ms");
-        throw error;
-      }
-      if (timeout < 0 || timeout > 180) {
-        const error = new RangeError("The advertising timeout must be within the range of 0 to 180 s");
-        throw error;
+      if (interval !== undefined) {
+        if (interval < 32 || interval > 8000) {
+          const error = new RangeError("The advertising interval must be within the range of 20 ms to 5 000 ms");
+          throw error;
+        }
+        // Interval is in units of 0.625 ms.
+        interval = interval * 1.6;
       }
 
+      if (timeout !== undefined) {
+        if (timeout < 0 || timeout > 180) {
+          const error = new RangeError("The advertising timeout must be within the range of 0 to 180 s");
+          throw error;
+        }
+      }
+
+      const receivedData = await this._read("default", true);
+      const littleEndian = true;
+      interval = interval || receivedData.getUint16(0, littleEndian);
+      timeout = timeout || receivedData.getUint8(2, littleEndian);
+
       const dataArray = new Uint8Array(3);
+      for (let i = 0; i < dataArray.length; i++) {
+        dataArray[i] = receivedData.getUint8(i);
+      }
+
       dataArray[0] = interval & 0xff;
       dataArray[1] = (interval >> 8) & 0xff;
       dataArray[2] = timeout;
