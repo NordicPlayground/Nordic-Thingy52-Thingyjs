@@ -129,7 +129,7 @@ class Thingy extends EventTarget {
 
     this.addEventListener("characteristicvaluechanged", this.receiveReading);
 
-    this.advertisingParametersService = new AdvertisingParametersService(this);
+    this.advertisingparameters = new AdvertisingParametersService(this);
     this.microphone = new MicrophoneSensor(this);
     this.mtu = new MTUService(this);
     this.name = new NameService(this);

@@ -106,6 +106,7 @@ Thingy offers several features, all of which rely on established BLE protocols f
 | Feature | Start/Stop | Read | Write |
 | :----: | :----: | :----: | :----: |
 | Absolute orientation | Yes | No | No |
+| Advertising parameters | No  | Yes | Yes |
 | Button | Yes | No | No |
 | Cloud token | No | Yes | Yes |
 | Color | Yes | No | No |
@@ -141,6 +142,7 @@ Below you can find extended information on each feature Thingy supports, as well
 
 -   [Thingy](#thingy)
     -   [Absolute orientation](#absolute-orientation)
+    -   [Advertising parameters](#advertising-parameters)
     -   [Button](#button)
     -   [Cloud token](#cloud-token)
     -   [Color](#color)
@@ -186,6 +188,20 @@ Allows interaction with the connected device's absolute orientation sensor
 
 -   `start` - Starts sending absolute orientation data from the connected device
 -   `stop`  - Terminates sending absolute orientation data from the connected device
+
+### Advertising parameters
+`thingy.advertisingparameters`
+
+Allows interaction with the connected device's advertising parameters
+
+**Supported operations**
+
+-   `read` - Reads the connected device's advertising parameters
+-   `write` - Writes the advertising parameters of the connected device.
+    - **Parameters**:
+        - Object:
+            - interval (Advertising interval, unit 0.625ms). Integer in the range 32 to 8000 (20ms to 5s)
+            - timeout (Advertising timeout, unit 1ms). Integer in the range 0 to 180 (0s to 3min)
 
 ### Button
 `thingy.button`
