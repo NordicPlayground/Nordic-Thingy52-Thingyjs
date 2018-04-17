@@ -31,6 +31,13 @@
 
 import EventTarget from "./EventTarget.js";
 
+class BusyGattError extends Error {
+  constructor(message) {
+    super();
+    this.message = message;
+  }
+}
+
 class FeatureOperations extends EventTarget {
   constructor(device, type) {
     super();
@@ -76,7 +83,7 @@ class FeatureOperations extends EventTarget {
         throw error;
       }
     } else {
-      const e = new Error(`Could not connect to the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
+      const e = new BusyGattError(`Could not connect to the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
       throw e;
     }
   }
@@ -124,7 +131,7 @@ class FeatureOperations extends EventTarget {
         throw error;
       }
     } else {
-      const e = new Error(`Could not read the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
+      const e = new BusyGattError(`Could not read the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
       throw e;
     }
   }
@@ -162,7 +169,7 @@ class FeatureOperations extends EventTarget {
       }
     } else {
       window.busyGatt = false;
-      const e = new Error(`Could not write to the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
+      const e = new BusyGattError(`Could not write to the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
       throw e;
     }
   }
@@ -243,7 +250,7 @@ class FeatureOperations extends EventTarget {
           }
         }
       } else {
-        const e = Error(`Could not start the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
+        const e = new BusyGattError(`Could not start the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
         throw e;
       }
     }
