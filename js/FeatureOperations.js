@@ -265,7 +265,6 @@ class FeatureOperations extends EventTarget {
       await this._notify(true, ch);
     } catch (error) {
       this.notifyError(error);
-      throw error;
     }
   }
 
@@ -274,7 +273,6 @@ class FeatureOperations extends EventTarget {
       await this._notify(false, ch);
     } catch (error) {
       this.notifyError(error);
-      throw error;
     }
   }
 
@@ -284,7 +282,6 @@ class FeatureOperations extends EventTarget {
       return val;
     } catch (error) {
       this.notifyError(error);
-      throw error;
     }
   }
 
@@ -293,7 +290,6 @@ class FeatureOperations extends EventTarget {
       await this._write(data, ch);
     } catch (error) {
       this.notifyError(error);
-      throw error;
     }
   }
 }
