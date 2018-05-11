@@ -43,7 +43,7 @@ class FeatureOperations extends EventTarget {
     super();
     this.device = device;
     this.type = type || this.constructor.name;
-    this.latestReadings = new Map();
+    this.latestReading = new Map();
   }
 
   async connect() {
@@ -184,75 +184,73 @@ class FeatureOperations extends EventTarget {
       await this.connect();
     }
 
-    if (!this.characteristics[ch].notifying) {
-      if (!this.hasProperty("notify", ch)) {
-        const e = new Error(`The ${this.type} feature does not support the start/stop methods`);
-        throw e;
-      }
+    if (!this.hasProperty("notify", ch)) {
+      const e = new Error(`The ${this.type} feature does not support the start/stop methods`);
+      throw e;
+    }
 
-      const onReading = (e) => {
-        const eventData = e.target.value;
-        const decodedData = this.characteristics[ch].decoder(eventData);
+    const onReading = (e) => {
+      const eventData = e.target.value;
+      const decodedData = this.characteristics[ch].decoder(eventData);
 
-        let ce;
+      let ce;
 
-        if (verify) {
-          ce = new CustomEvent("verifyReaction", {detail: {feature: this.type, data: decodedData}});
-          this.dispatchEvent(ce);
-        } else {
-          this.latestReadings.clear();
+      if (verify) {
+        ce = new CustomEvent("verifyReaction", {detail: {feature: this.type, data: decodedData}});
+        this.dispatchEvent(ce);
+      } else {
+        this.latestReading.clear();
 
-          for (let elem in decodedData) {
-            this.latestReadings.set(elem, decodedData[elem]);
-          }
-
-          const e = new Event("reading");
-          this.dispatchEvent(e);
-
-          ce = new CustomEvent("characteristicvaluechanged", {detail: {feature: this.type, data: decodedData}});
-          this.device.dispatchEvent(ce);
+        for (let elem in decodedData) {
+          this.latestReading.set(elem, decodedData[elem]);
         }
-      };
 
-      if (!this.characteristics[ch].decoder) {
-        const e = new Error("The characteristic you're trying to notify does not have a specified decoder");
-        throw e;
+        const e = new Event("reading");
+        this.dispatchEvent(e);
+
+        ce = new CustomEvent("characteristicvaluechanged", {detail: {feature: this.type, data: decodedData}});
+        this.device.dispatchEvent(ce);
       }
+    };
 
-      const characteristic = this.characteristics[ch].characteristic;
+    if (!this.characteristics[ch].decoder) {
+      const e = new Error("The characteristic you're trying to notify does not have a specified decoder");
+      throw e;
+    }
 
-      if (!window.busyGatt) {
-        if (enable) {
-          try {
-            window.busyGatt = true;
-            const csn = await characteristic.startNotifications();
-            csn.addEventListener("characteristicvaluechanged", onReading.bind(this));
-            window.busyGatt = false;
-            this.characteristics[ch].notifying = true;
-            console.log(`\nNotifications enabled for the ${this.type} feature`);
-          } catch (error) {
-            this.characteristics[ch].notifying = false;
-            window.busyGatt = false;
-            throw error;
-          }
-        } else {
-          try {
-            window.busyGatt = true;
-            const csn = await characteristic.stopNotifications();
-            csn.removeEventListener("characteristicvaluechanged", onReading.bind(this));
-            window.busyGatt = false;
-            this.characteristics[ch].notifying = false;
-            console.log(`\nNotifications disabled for the ${this.type} feature`);
-          } catch (error) {
-            this.characteristics[ch].notifying = true;
-            window.busyGatt = false;
-            throw error;
-          }
+    const characteristic = this.characteristics[ch].characteristic;
+
+    if (!window.busyGatt) {
+      if (enable) {
+        try {
+          window.busyGatt = true;
+          const csn = await characteristic.startNotifications();
+          csn.addEventListener("characteristicvaluechanged", onReading.bind(this));
+          window.busyGatt = false;
+          this.characteristics[ch].notifying = true;
+          console.log(`\nNotifications enabled for the ${this.type} feature`);
+        } catch (error) {
+          this.characteristics[ch].notifying = false;
+          window.busyGatt = false;
+          throw error;
         }
       } else {
-        const e = new BusyGattError(`Could not start the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
-        throw e;
+        try {
+          window.busyGatt = true;
+          const csn = await characteristic.stopNotifications();
+          csn.removeEventListener("characteristicvaluechanged", onReading.bind(this));
+          window.busyGatt = false;
+          this.characteristics[ch].notifying = false;
+          console.log(`\nNotifications disabled for the ${this.type} feature`);
+        } catch (error) {
+          this.characteristics[ch].notifying = true;
+          window.busyGatt = false;
+          throw error;
+        }
       }
+    } else {
+      const e = new BusyGattError(`Could not start the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
+      throw e;
     }
   }
 
