@@ -89,7 +89,7 @@ class AdvertisingParametersService extends FeatureOperations {
 
       // Check parameters
       if (interval !== undefined) {
-        if (interval < 32 || interval > 8000) {
+        if (interval < 20 || interval > 5000) {
           const error = new RangeError("The advertising interval must be within the range of 20 ms to 5 000 ms");
           throw error;
         }
