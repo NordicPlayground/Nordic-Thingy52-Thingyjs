@@ -56,7 +56,7 @@ class EnvironmentConfigurationService extends FeatureOperations {
       const pressureInterval = data.getUint16(2, littleEndian);
       const humidityInterval = data.getUint16(4, littleEndian);
       const colorInterval = data.getUint16(6, littleEndian);
-      const gasMode = data.getUint8(8);
+      const gasInterval = data.getUint8(8);
       const colorSensorRed = data.getUint8(9);
       const colorSensorGreen = data.getUint8(10);
       const colorSensorBlue = data.getUint8(11);
@@ -66,10 +66,12 @@ class EnvironmentConfigurationService extends FeatureOperations {
         pressureInterval: pressureInterval,
         humidityInterval: humidityInterval,
         colorInterval: colorInterval,
-        gasMode: gasMode,
-        colorSensorRed: colorSensorRed,
-        colorSensorGreen: colorSensorGreen,
-        colorSensorBlue: colorSensorBlue,
+        gasInterval: gasInterval,
+        colorSensorCalibration: {
+          red: colorSensorRed,
+          green: colorSensorGreen,
+          blue: colorSensorBlue,
+        },
       };
 
       return formattedData;
