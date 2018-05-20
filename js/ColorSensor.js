@@ -40,11 +40,9 @@ class ColorSensor extends FeatureOperations {
       uuid: this.device.TES_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TES_COLOR_UUID,
-        decoder: this.decodeColorData.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TES_COLOR_UUID,
+      decoder: this.decodeColorData.bind(this),
     };
   }
 

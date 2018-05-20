@@ -40,12 +40,10 @@ class ConnectionParametersService extends FeatureOperations {
       uuid: this.device.TCS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TCS_CONN_PARAMS_UUID,
-        decoder: this.decodeConnectionParam.bind(this),
-        encoder: this.encodeConnectionParam.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TCS_CONN_PARAMS_UUID,
+      decoder: this.decodeConnectionParam.bind(this),
+      encoder: this.encodeConnectionParam.bind(this),
     };
   }
 

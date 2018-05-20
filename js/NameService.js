@@ -40,12 +40,10 @@ class NameService extends FeatureOperations {
       uuid: this.device.TCS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TCS_NAME_UUID,
-        decoder: this.decodeName.bind(this),
-        encoder: this.encodeName.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TCS_NAME_UUID,
+      decoder: this.decodeName.bind(this),
+      encoder: this.encodeName.bind(this),
     };
   }
 

@@ -40,12 +40,10 @@ class AdvertisingParametersService extends FeatureOperations {
       uuid: this.device.TCS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TCS_ADV_PARAMS_UUID,
-        decoder: this.decodeAdvertisingParam.bind(this),
-        encoder: this.encodeAdvertisingParam.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TCS_ADV_PARAMS_UUID,
+      decoder: this.decodeAdvertisingParam.bind(this),
+      encoder: this.encodeAdvertisingParam.bind(this),
     };
   }
 

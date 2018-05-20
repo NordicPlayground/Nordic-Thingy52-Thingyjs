@@ -58,7 +58,7 @@ import EnvironmentConfigurationService from "./EnvironmentConfigurationService.j
 import MotionConfigurationService from "./MotionConfigurationService.js";
 
 class Thingy extends EventTarget {
-  constructor(options = {logEnabled: true}) {
+  constructor(options = {logEnabled: true, queueOperations: true}) {
     super();
 
     if (this.logEnabled) {
@@ -66,6 +66,8 @@ class Thingy extends EventTarget {
     }
 
     this.logEnabled = options.logEnabled;
+    this.queueOperations = options.queueOperations;
+    this.operationsQueue = [];
 
     // TCS = Thingy Configuration Service
     this.TCS_UUID = "ef680100-9b35-4933-9b10-52ffa9740042";
@@ -121,13 +123,14 @@ class Thingy extends EventTarget {
       this.TSS_UUID,
     ];
 
-    if (!window.busyGatt) {
+    if (window.busyGatt === undefined) {
       window.busyGatt = false;
     }
 
     this.receiveReading = this.receiveReading.bind(this);
 
     this.addEventListener("characteristicvaluechanged", this.receiveReading);
+    this.addEventListener("operationcomplete", this.executeInterruptedOperations);
 
     this.advertisingparameters = new AdvertisingParametersService(this);
     this.microphone = new MicrophoneSensor(this);
@@ -205,6 +208,15 @@ class Thingy extends EventTarget {
     } catch (error) {
       const e = new Error(error);
       throw e;
+    }
+  }
+
+  async executeInterruptedOperations() {
+    while (this.operationQueue.length != 0) {
+      if (!this.busyGatt) {
+        const operation = this.operationQueue.shift();
+        await operation();
+      }
     }
   }
 }

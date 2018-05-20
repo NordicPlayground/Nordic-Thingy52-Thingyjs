@@ -40,13 +40,11 @@ class Microphone extends FeatureOperations {
       uuid: this.device.TSS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TSS_MIC_UUID,
-        decoder: this.decodeMicrophoneData.bind(this),
-        verifyAction: this.verifyMicrophoneAction.bind(this),
-        verifyReaction: this.verifyMicrophoneReaction.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TSS_MIC_UUID,
+      decoder: this.decodeMicrophoneData.bind(this),
+      verifyAction: this.verifyMicrophoneAction.bind(this),
+      verifyReaction: this.verifyMicrophoneReaction.bind(this),
     };
 
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -83,7 +81,7 @@ class Microphone extends FeatureOperations {
       try {
         const microphoneData = data.detail.data;
         await this._notify(false, "default", true);
-        this.removeEventListener("verifyReaction", this.characteristics.default.verifyReaction);
+        this.removeEventListener("verifyReaction", this.characteristic.verifyReaction);
 
         if (microphoneData.byteLength === 131) {
           await this._notify(true);

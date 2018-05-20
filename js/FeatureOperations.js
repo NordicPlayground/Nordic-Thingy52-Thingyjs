@@ -43,7 +43,7 @@ class FeatureOperations extends EventTarget {
     super();
     this.device = device;
     this.type = type || this.constructor.name;
-    this.latestReading = new Map();
+    this.latestReading = new Map(); 
   }
 
   async connect() {
@@ -52,38 +52,34 @@ class FeatureOperations extends EventTarget {
         window.busyGatt = true;
         this.service.service = await this.device.server.getPrimaryService(this.service.uuid);
 
-        for (const ch in this.characteristics) {
-          if (Object.prototype.hasOwnProperty.call(this.characteristics, ch)) {
-            this.characteristics[ch].characteristic = await this.service.service.getCharacteristic(this.characteristics[ch].uuid);
-            this.characteristics[ch].connected = true;
-            if (this.constructor.name !== "CustomSensor") {
-              this.characteristics[ch].properties = this.characteristics[ch].characteristic.properties;
-            }
-          }
-        }
+        this.characteristic.characteristic = await this.service.service.getCharacteristic(this.characteristic.uuid);
+        this.characteristic.connected = true;
 
         window.busyGatt = false;
+        this.operationExecutedEventDispatcher();
 
-        if (this.characteristics.default.verifyAction && this.characteristics.default.verifyAction) {
-          await this.characteristics.default.verifyAction();
+        if (this.characteristic.verifyAction && this.characteristic.verifyReaction) {
+          await this.characteristic.verifyAction();
 
-          this.addEventListener("verifyReaction", this.characteristics.default.verifyReaction);
+          this.addEventListener("verifyReaction", this.characteristic.verifyReaction);
 
-          await this._notify(true, "default", true);
+          await this._notify(true, true);
         }
 
         console.log(`Connected to the ${this.type} feature`);
       } catch (error) {
         window.busyGatt = false;
-
-        for (const ch in this.characteristics) {
-          this.characteristics[ch].connected = false;
-        }
+        this.characteristic.connected = false;
+        this.device.operationsQueue.append(this.connect.bind(this));
+        this.operationExecutedEventDispatcher();
 
         throw error;
       }
     } else {
-      const e = new BusyGattError(`Could not connect to the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
+      this.device.operationsQueue.append(this.connect.bind(this));
+      this.operationExecutedEventDispatcher();
+
+      const e = new BusyGattError(`Could not connect to the ${this.type} feature at this moment, please try again`);
       throw e;
     }
   }
@@ -99,99 +95,139 @@ class FeatureOperations extends EventTarget {
     this.device.dispatchEvent(ce);
   }
 
-  async _read(ch = "default", returnRaw = false) {
-    if (!this.characteristics[ch].connected) {
+  async _read(returnRaw = false) {
+    if (!this.characteristic.connected) {
       await this.connect();
     }
   
-    if (!this.hasProperty("read", ch)) {
+    if (!this.hasProperty("read")) {
       const e = new Error(`The ${this.type} feature does not support the read method`);
       throw e;
     }
 
-    if (!this.characteristics[ch].decoder) {
+    if (!this.characteristic.decoder) {
       const e = new Error("The characteristic you're trying to write does not have a specified decoder");
       throw e;
     }
 
-    if (!window.busyGatt) {
-      try {
-        window.busyGatt = true;
-        if (returnRaw === true) {
-          const rawProp = await this.characteristics[ch].characteristic.readValue();
-          window.busyGatt = false;
-          return Promise.resolve(rawProp);
+    let retries = 0;
+
+    const f = async () => {
+      if (window.busyGatt) {
+        if (retries === 3) {
+          const e = new BusyGattError(`The read operation could not be performed at this time, please try again`);
+          throw e;
         } else {
-          const prop = await this.characteristics[ch].characteristic.readValue();
-          window.busyGatt = false;
-          return Promise.resolve(this.characteristics[ch].decoder(prop));
+          setTimeout(() => {
+            retries++;
+  
+            f();
+          }, 500)
         }
-      } catch (error) {
-        window.busyGatt = false;
-        throw error;
+      } else {
+        try {
+          window.busyGatt = true;
+          if (returnRaw === true) {
+            const rawProp = await this.characteristic.characteristic.readValue();
+            window.busyGatt = false;
+            return Promise.resolve(rawProp);
+          } else {
+            const prop = await this.characteristic.characteristic.readValue();
+            window.busyGatt = false;
+            return Promise.resolve(this.characteristic.decoder(prop));
+          }
+        } catch (error) {
+          window.busyGatt = false;
+          throw error;
+        }
       }
-    } else {
-      const e = new BusyGattError(`Could not read the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
-      throw e;
     }
+
+    f();
   }
 
-  async _write(prop, ch = "default") {
+  async _write(prop) {
     if (prop === undefined) {
       const e = new Error("You have to write a non-empty body");
       throw e;
     }
 
-    if (!this.characteristics[ch].connected) {
+    if (!this.characteristic.connected) {
       await this.connect();
     }
 
-    if (!this.hasProperty("write", ch)) {
+    if (!this.hasProperty("write")) {
       const e = new Error(`The ${this.type} feature does not support the write method`);
       throw e;
     }
 
-    if (!this.characteristics[ch].encoder) {
+    if (!this.characteristic.encoder) {
       const e = new Error("The characteristic you're trying to write does not have a specified encoder");
       throw e;
     }
 
-    if (!window.busyGatt) {
-      try {
-        const encodedValue = await this.characteristics[ch].encoder(prop);
+    let retries = 0;
 
-        window.busyGatt = true;
-        await this.characteristics[ch].characteristic.writeValue(encodedValue);
-        window.busyGatt = false;
-        return;
-      } catch (error) {
-        throw error;
+    const f = async () => {
+      if (window.busyGatt) {
+        if (retries === 3) {
+          const e = new BusyGattError(`The write operation could not be performed at this time, please try again`);
+          throw e;
+        } else {
+          setTimeout(() => {
+            retries++;
+  
+            f();
+          }, 500)
+        }
+      } else {
+        try {
+          const encodedValue = await this.characteristic.encoder(prop);
+          window.busyGatt = true;
+          await this.characteristic.characteristic.writeValue(encodedValue);
+          window.busyGatt = false;
+          return;
+        } catch (error) {
+          throw error;
+        }
       }
-    } else {
-      window.busyGatt = false;
-      const e = new BusyGattError(`Could not write to the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
-      throw e;
     }
+
+    f();
   }
 
-  async _notify(enable, ch = "default", verify = false) {
+  busyGattEvent() {
+    return new Event("busygatt");
+  }
+
+  availableGattEvent() {
+    return new Event("availablegatt");
+  }
+
+  operationExecutedEventDispatcher() {
+    const ev = new Event("operationcomplete");
+    this.device.dispatchEvent(ev);
+  }
+
+  async _notify(enable, verify = false) {
     if (!(enable === true || enable === false)) {
       const e = new Error("You have to specify the enable parameter (true/false)");
       throw e;
     }
 
-    if (!this.characteristics[ch].connected) {
+    if (!this.characteristic.connected) {
       await this.connect();
     }
 
-    if (!this.hasProperty("notify", ch)) {
+    if (!this.hasProperty("notify")) {
       const e = new Error(`The ${this.type} feature does not support the start/stop methods`);
       throw e;
     }
 
+    // maybe we can't bind this function if we want the eventListener to be removed properly
     const onReading = (e) => {
       const eventData = e.target.value;
-      const decodedData = this.characteristics[ch].decoder(eventData);
+      const decodedData = this.characteristic.decoder(eventData);
 
       let ce;
 
@@ -213,12 +249,12 @@ class FeatureOperations extends EventTarget {
       }
     };
 
-    if (!this.characteristics[ch].decoder) {
+    if (!this.characteristic.decoder) {
       const e = new Error("The characteristic you're trying to notify does not have a specified decoder");
       throw e;
     }
 
-    const characteristic = this.characteristics[ch].characteristic;
+    const characteristic = this.characteristic.characteristic;
 
     if (!window.busyGatt) {
       if (enable) {
@@ -227,11 +263,14 @@ class FeatureOperations extends EventTarget {
           const csn = await characteristic.startNotifications();
           csn.addEventListener("characteristicvaluechanged", onReading.bind(this));
           window.busyGatt = false;
-          this.characteristics[ch].notifying = true;
+          this.operationExecutedEventDispatcher();
+          this.characteristic.notifying = true;
           console.log(`\nNotifications enabled for the ${this.type} feature`);
         } catch (error) {
-          this.characteristics[ch].notifying = false;
+          this.characteristic.notifying = false;
           window.busyGatt = false;
+          this.device.operationsQueue.append(this.this._notify.bind(this));
+          this.operationExecutedEventDispatcher();
           throw error;
         }
       } else {
@@ -240,52 +279,58 @@ class FeatureOperations extends EventTarget {
           const csn = await characteristic.stopNotifications();
           csn.removeEventListener("characteristicvaluechanged", onReading.bind(this));
           window.busyGatt = false;
-          this.characteristics[ch].notifying = false;
+          this.operationExecutedEventDispatcher();
+          this.characteristic.notifying = false;
           console.log(`\nNotifications disabled for the ${this.type} feature`);
         } catch (error) {
-          this.characteristics[ch].notifying = true;
+          this.characteristic.notifying = true;
           window.busyGatt = false;
+          this.device.operationsQueue.append(this._notify.bind(this));
+          this.operationExecutedEventDispatcher();
           throw error;
         }
       }
     } else {
-      const e = new BusyGattError(`Could not start the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
+      this.device.operationsQueue.append(this._notify.bind(this));
+      this.operationExecutedEventDispatcher();
+
+      const e = new BusyGattError(`Could not start the ${this.type} feature at this moment, please try again`);
       throw e;
     }
   }
 
-  hasProperty(property, ch = "default") {
-    return (this.characteristics[ch].properties[property] === true ? true : false);
+  hasProperty(property) {
+    return (this.characteristic.properties[property] === true ? true : false);
   }
 
-  async start(ch = "default") {
+  async start() {
     try {
-      await this._notify(true, ch);
+      await this._notify(true);
     } catch (error) {
       this.notifyError(error);
     }
   }
 
-  async stop(ch = "default") {
+  async stop() {
     try {
-      await this._notify(false, ch);
+      await this._notify(false);
     } catch (error) {
       this.notifyError(error);
     }
   }
 
-  async read(ch = "default") {
+  async read() {
     try {
-      const val = await this._read(ch);
+      const val = await this._read();
       return val;
     } catch (error) {
       this.notifyError(error);
     }
   }
 
-  async write(data, ch = "default") {
+  async write(data) {
     try {
-      await this._write(data, ch);
+      await this._write(data);
     } catch (error) {
       this.notifyError(error);
     }

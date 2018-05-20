@@ -40,11 +40,9 @@ class HeadingSensor extends FeatureOperations {
       uuid: this.device.TMS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TMS_HEADING_UUID,
-        decoder: this.decodeHeadingData.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TMS_HEADING_UUID,
+      decoder: this.decodeHeadingData.bind(this),
     };
   }
 
