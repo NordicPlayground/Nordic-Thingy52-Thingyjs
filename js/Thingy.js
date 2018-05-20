@@ -212,10 +212,12 @@ class Thingy extends EventTarget {
   }
 
   async executeInterruptedOperations() {
-    while (this.operationQueue.length != 0) {
-      if (!this.busyGatt) {
-        const operation = this.operationQueue.shift();
-        await operation();
+    if (this.queueOperations) {
+      while (this.operationQueue.length != 0) {
+        if (!this.busyGatt) {
+          const operation = this.operationQueue.shift();
+          await operation();
+        }
       }
     }
   }
