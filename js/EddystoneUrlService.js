@@ -44,6 +44,7 @@ class EddystoneUrlService extends FeatureOperations {
       default: {
         uuid: this.device.TCS_EDDYSTONE_UUID,
         decoder: this.decodeEddystoneData.bind(this),
+        encoder: this.encodeEddystoneData.bind(this),
       },
     };
   }
