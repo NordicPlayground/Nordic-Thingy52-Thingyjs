@@ -60,19 +60,10 @@ class ConnectionParametersService extends FeatureOperations {
       // Supervision timeout is given i units of 10 ms
       const supervisionTimeout = data.getUint16(6, littleEndian) * 10;
       const params = {
-        connectionInterval: {
-          min: minConnInterval,
-          max: maxConnInterval,
-          unit: "ms",
-        },
-        slaveLatency: {
-          value: slaveLatency,
-          unit: "number of connection intervals",
-        },
-        supervisionTimeout: {
-          timeout: supervisionTimeout,
-          unit: "ms",
-        },
+        minInterval: minConnInterval,
+        maxInterval: maxConnInterval,
+        slaveLatency: slaveLatency,
+        timeout: supervisionTimeout,
       };
       return params;
     } catch (error) {

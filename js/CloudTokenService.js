@@ -55,9 +55,7 @@ class CloudTokenService extends FeatureOperations {
       const token = decoder.decode(data);
 
       const decodedToken = {
-        token: {
-          value: token,
-        },
+        token: token,
       };
       return decodedToken;
     } catch (error) {

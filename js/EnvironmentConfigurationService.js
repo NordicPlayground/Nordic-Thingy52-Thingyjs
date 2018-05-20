@@ -52,17 +52,25 @@ class EnvironmentConfigurationService extends FeatureOperations {
   decodeConfigData(data) {
     try {
       const littleEndian = true;
-      const tempInterval = data.getUint16(0, littleEndian);
+      const temperatureInterval = data.getUint16(0, littleEndian);
       const pressureInterval = data.getUint16(2, littleEndian);
       const humidityInterval = data.getUint16(4, littleEndian);
       const colorInterval = data.getUint16(6, littleEndian);
-      const gasInterval = data.getUint8(8);
+      let gasInterval = data.getUint8(8);
       const colorSensorRed = data.getUint8(9);
       const colorSensorGreen = data.getUint8(10);
       const colorSensorBlue = data.getUint8(11);
 
+      if (gasInterval === 1) {
+        gasInterval = 1;
+      } else if (gasInterval === 2) {
+        gasInterval = 10;
+      } else if (gasInterval === 3) {
+        gasInterval = 60;
+      }
+
       const formattedData = {
-        tempInterval: tempInterval,
+        temperatureInterval: temperatureInterval,
         pressureInterval: pressureInterval,
         humidityInterval: humidityInterval,
         colorInterval: colorInterval,

@@ -54,9 +54,7 @@ class NameService extends FeatureOperations {
       const decoder = new TextDecoder("utf-8");
       const name = decoder.decode(data);
       const decodedName = {
-        name: {
-          value: name,
-        },
+        name: name,
       };
       return decodedName;
     } catch (error) {

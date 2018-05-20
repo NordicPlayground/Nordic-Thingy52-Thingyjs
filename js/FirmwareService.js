@@ -56,9 +56,7 @@ class FirmwareService extends FeatureOperations {
       const version = `v${major}.${minor}.${patch}`;
 
       const decodedVersion = {
-        firmware: {
-          value: version,
-        },
+        firmware: version,
       };
 
       return decodedVersion;

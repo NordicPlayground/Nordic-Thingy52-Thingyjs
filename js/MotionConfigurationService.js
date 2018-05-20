@@ -53,16 +53,16 @@ class MotionConfigurationService extends FeatureOperations {
     try {
       const littleEndian = true;
       const stepCounterInterval = data.getUint16(0, littleEndian);
-      const temperatureCompensationInterval = data.getUint16(2, littleEndian);
-      const magnetometerCompensationInterval = data.getUint16(4, littleEndian);
-      const motionProcessingUnitFrequency = data.getUint16(6, littleEndian);
+      const tempCompensationInterval = data.getUint16(2, littleEndian);
+      const magnetCompInterval = data.getUint16(4, littleEndian);
+      const motionProcessFrequency = data.getUint16(6, littleEndian);
       const wakeOnMotion = data.getUint8(8);
 
       const formattedData = {
         stepCounterInterval: stepCounterInterval,
-        temperatureCompensationInterval: temperatureCompensationInterval,
-        magnetometerCompensationInterval: magnetometerCompensationInterval,
-        motionProcessingUnitFrequency: motionProcessingUnitFrequency,
+        tempCompensationInterval: tempCompensationInterval,
+        magnetCompInterval: magnetCompInterval,
+        motionProcessFrequency: motionProcessFrequency,
         wakeOnMotion: wakeOnMotion,
       };
 

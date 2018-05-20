@@ -56,14 +56,8 @@ class AdvertisingParametersService extends FeatureOperations {
       const interval = (data.getUint16(0, littleEndian) * 0.625).toFixed(0);
       const timeout = data.getUint8(2);
       const decodedAdvertisingParams = {
-        interval: {
-          interval: interval,
-          unit: "ms",
-        },
-        timeout: {
-          timeout: timeout,
-          unit: "s",
-        },
+        interval: interval,
+        timeout: timeout,
       };
       return decodedAdvertisingParams;
     } catch (error) {
