@@ -61,13 +61,22 @@ class Thingy extends EventTarget {
   constructor(options = {logEnabled: true, queueOperations: true}) {
     super();
 
+    this.logEnabled = options.logEnabled;
+    this.queueOperations = options.queueOperations;
+
     if (this.logEnabled) {
       console.log("I am alive!");
     }
 
-    this.logEnabled = options.logEnabled;
-    this.queueOperations = options.queueOperations;
-    this.operationsQueue = [];
+    if (window.operationQueue === undefined) {
+      window.operationQueue = [];
+    }
+
+    if (window.busyGatt === undefined) {
+      window.busyGatt = false;
+    }
+
+
 
     // TCS = Thingy Configuration Service
     this.TCS_UUID = "ef680100-9b35-4933-9b10-52ffa9740042";
@@ -122,10 +131,6 @@ class Thingy extends EventTarget {
       this.TMS_UUID,
       this.TSS_UUID,
     ];
-
-    if (window.busyGatt === undefined) {
-      window.busyGatt = false;
-    }
 
     this.receiveReading = this.receiveReading.bind(this);
 
@@ -213,9 +218,9 @@ class Thingy extends EventTarget {
 
   async executeInterruptedOperations() {
     if (this.queueOperations) {
-      while (this.operationQueue.length != 0) {
-        if (!this.busyGatt) {
-          const operation = this.operationQueue.shift();
+      while (window.operationQueue.length != 0) {
+        if (!window.busyGatt) {
+          const operation = window.operationQueue.shift();
           await operation();
         }
       }

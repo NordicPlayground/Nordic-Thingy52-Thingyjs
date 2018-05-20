@@ -70,13 +70,13 @@ class FeatureOperations extends EventTarget {
       } catch (error) {
         window.busyGatt = false;
         this.characteristic.connected = false;
-        this.device.operationsQueue.append(this.connect.bind(this));
+        window.operationQueue.append(this.connect.bind(this));
         this.operationExecutedEventDispatcher();
 
         throw error;
       }
     } else {
-      this.device.operationsQueue.append(this.connect.bind(this));
+      window.operationQueue.append(this.connect.bind(this));
       this.operationExecutedEventDispatcher();
 
       const e = new BusyGattError(`Could not connect to the ${this.type} feature at this moment, please try again`);
@@ -269,7 +269,7 @@ class FeatureOperations extends EventTarget {
         } catch (error) {
           this.characteristic.notifying = false;
           window.busyGatt = false;
-          this.device.operationsQueue.append(this.this._notify.bind(this));
+          window.operationQueue.append(this._notify.bind(this));
           this.operationExecutedEventDispatcher();
           throw error;
         }
@@ -285,13 +285,13 @@ class FeatureOperations extends EventTarget {
         } catch (error) {
           this.characteristic.notifying = true;
           window.busyGatt = false;
-          this.device.operationsQueue.append(this._notify.bind(this));
+          window.operationQueue.append(this._notify.bind(this));
           this.operationExecutedEventDispatcher();
           throw error;
         }
       }
     } else {
-      this.device.operationsQueue.append(this._notify.bind(this));
+      window.operationQueue.append(this._notify.bind(this));
       this.operationExecutedEventDispatcher();
 
       const e = new BusyGattError(`Could not start the ${this.type} feature at this moment, please try again`);
