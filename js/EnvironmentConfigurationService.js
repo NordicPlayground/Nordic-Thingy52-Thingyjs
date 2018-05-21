@@ -147,7 +147,7 @@ class EnvironmentConfigurationService extends FeatureOperations {
       }
 
       // Preserve values for those settings that are not being changed
-      const receivedData = await this._read("default", true);
+      const receivedData = await this._read(true);
       const littleEndian = true;
       temperatureInterval = temperatureInterval || receivedData.getUint16(0, littleEndian);
       pressureInterval = pressureInterval || receivedData.getUint16(2, littleEndian);

@@ -102,7 +102,7 @@ class AdvertisingParametersService extends FeatureOperations {
         }
       }
 
-      const receivedData = await this._read("default", true);
+      const receivedData = await this._read(true);
       const littleEndian = true;
       interval = interval || receivedData.getUint16(0, littleEndian);
       timeout = timeout || receivedData.getUint8(2, littleEndian);

@@ -130,7 +130,7 @@ class ConnectionParametersService extends FeatureOperations {
         maxInterval = Math.round(maxInterval * 0.8);
       }
 
-      const receivedData = await this._read("default", true);
+      const receivedData = await this._read(true);
       const littleEndian = true;
       minInterval = minInterval || receivedData.getUint16(0, littleEndian);
       maxInterval = maxInterval || receivedData.getUint16(2, littleEndian);

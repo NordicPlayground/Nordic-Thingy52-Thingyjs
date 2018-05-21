@@ -117,7 +117,7 @@ class MotionConfigurationService extends FeatureOperations {
         wakeOnMotion = wakeOnMotion ? 1 : 0;
       }
 
-      const receivedData = await this._read("default", true);
+      const receivedData = await this._read(true);
       const littleEndian = true;
       stepCounterInterval = stepCounterInterval || receivedData.getUint16(0, littleEndian);
       tempCompensationInterval = tempCompensationInterval || receivedData.getUint16(2, littleEndian);
