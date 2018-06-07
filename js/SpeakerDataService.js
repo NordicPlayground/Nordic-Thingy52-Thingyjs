@@ -46,11 +46,6 @@ class SpeakerDataService extends FeatureOperations {
         uuid: this.device.TSS_SPEAKER_DATA_UUID,
         encoder: this.encodeSpeakerData.bind(this),
       },
-      config: {
-        uuid: this.device.TSS_CONFIG_UUID,
-        decoder: this.decodeSoundConfigurationData.bind(this),
-        encoder: this.encodeSoundConfigurationData.bind(this),
-      },
     };
 
     this.soundconfigurationservice = new SoundConfigurationService(this);
@@ -58,12 +53,6 @@ class SpeakerDataService extends FeatureOperations {
 
   async encodeSpeakerData(data) {
     try {
-      const mode = {
-        speakerMode: data.mode,
-      };
-
-      await this.write(mode, "config");
-
       if (data.mode === 1) {
         const dataArray = new Uint8Array(5);
         const frequency = data.frequency;
@@ -87,63 +76,6 @@ class SpeakerDataService extends FeatureOperations {
 
         return dataArray;
       }
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  decodeSoundConfigurationData(data) {
-    try {
-      const speakerMode = data.getUint8(0);
-      const microphoneMode = data.getUint8(1);
-      const decodedSoundConfiguration = {
-        speakerMode: speakerMode,
-        microphoneMode: microphoneMode,
-      };
-      return decodedSoundConfiguration;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async encodeSoundConfigurationData(data) {
-    try {
-      if (typeof data !== "object") {
-        return Promise.reject(new TypeError("The argument has to be an object."));
-      }
-
-      if ((data.speakerMode === undefined) && (data.microphoneMode === undefined)) {
-        return Promise.reject(new TypeError("The argument has to be an object with at least one of the properties speakerMode and microphoneMode."));
-      }
-
-      let speakerMode = data.speakerMode;
-      let microphoneMode = data.microphoneMode;
-
-      if (speakerMode !== undefined) {
-        if (!(speakerMode === 1 || speakerMode === 2 || speakerMode === 3)) {
-          return Promise.reject(new RangeError("The speaker mode must be one of the integers 1, 2 or 3."));
-        }
-      }
-
-      if (microphoneMode !== undefined) {
-        if (!(microphoneMode === 1 || microphoneMode === 2)) {
-          return Promise.reject(new RangeError("The microphone mode must be one of the integers 1 or 2."));
-        }
-      }
-
-      const receivedData = await this._read("config", true);
-      speakerMode = speakerMode || receivedData.getUint8(0);
-      microphoneMode = microphoneMode || receivedData.getUint8(1);
-
-      const dataArray = new Uint8Array(2);
-      for (let i = 0; i < dataArray.length; i++) {
-        dataArray[i] = receivedData.getUint8(i);
-      }
-
-      dataArray[0] = speakerMode & 0xff;
-      dataArray[1] = microphoneMode & 0xff;
-
-      return dataArray;
     } catch (error) {
       throw error;
     }

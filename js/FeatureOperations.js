@@ -146,46 +146,8 @@ class FeatureOperations extends EventTarget {
       await this.connect();
     }
 
-    if (!this.hasProperty("write", ch)) {
-      const e = new Error(`The ${this.type} feature does not support the write method`);
-      throw e;
-    }
-
-    if (!this.characteristics[ch].encoder) {
-      const e = new Error("The characteristic you're trying to write does not have a specified encoder");
-      throw e;
-    }
-
-    if (!window.busyGatt) {
-      try {
-        const encodedValue = await this.characteristics[ch].encoder(prop);
-
-        window.busyGatt = true;
-        await this.characteristics[ch].characteristic.writeValue(encodedValue);
-        window.busyGatt = false;
-        return;
-      } catch (error) {
-        throw error;
-      }
-    } else {
-      window.busyGatt = false;
-      const e = new BusyGattError(`Could not write to the ${this.type} feature at this moment, as Thingy only allows one concurrent BLE operation`);
-      throw e;
-    }
-  }
-
-  async _writeWithoutResponse(prop, ch = "default") {
-    if (prop === undefined) {
-      const e = new Error("You have to write a non-empty body");
-      throw e;
-    }
-
-    if (!this.characteristics[ch].connected) {
-      await this.connect();
-    }
-
-    if (!this.hasProperty("writeWithoutResponse", ch)) {
-      const e = new Error(`The ${this.type} feature does not support the writeWithoutResponse method`);
+    if (!this.hasProperty("write", ch) && !this.hasProperty("writeWithoutResponse", ch)) {
+      const e = new Error(`The ${this.type} feature does not support the write or writeWithoutResponse method`);
       throw e;
     }
 
@@ -324,14 +286,6 @@ class FeatureOperations extends EventTarget {
   async write(data, ch = "default") {
     try {
       await this._write(data, ch);
-    } catch (error) {
-      this.notifyError(error);
-    }
-  }
-
-  async writeWithoutResponse(data, ch = "default") {
-    try {
-      await this._writeWithoutResponse(data, ch);
     } catch (error) {
       this.notifyError(error);
     }
