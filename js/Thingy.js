@@ -157,8 +157,8 @@ class Thingy extends EventTarget {
     this.heading = new HeadingSensor(this);
     this.environmentconfiguration = new EnvironmentConfigurationService(this);
     this.motionconfiguration = new MotionConfigurationService(this);
-    this.soundconfigurationservice = new SoundConfigurationService(this);
-    this.speakerdataservice = new SpeakerDataService(this);
+    this.soundconfiguration = new SoundConfigurationService(this);
+    this.speakerdata = new SpeakerDataService(this);
   }
 
   async connect() {
