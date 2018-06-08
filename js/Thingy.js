@@ -58,6 +58,7 @@ import EnvironmentConfigurationService from "./EnvironmentConfigurationService.j
 import MotionConfigurationService from "./MotionConfigurationService.js";
 import SoundConfigurationService from "./SoundConfigurationService.js";
 import SpeakerDataService from "./SpeakerDataService.js";
+import SpeakerStatusService from "./SpeakerStatusService.js";
 
 class Thingy extends EventTarget {
   constructor(options = {logEnabled: true}) {
@@ -159,6 +160,7 @@ class Thingy extends EventTarget {
     this.motionconfiguration = new MotionConfigurationService(this);
     this.soundconfiguration = new SoundConfigurationService(this);
     this.speakerdata = new SpeakerDataService(this);
+    this.speakerstatus = new SpeakerStatusService(this);
   }
 
   async connect() {

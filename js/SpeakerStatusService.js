@@ -30,56 +30,37 @@
  */
 
 import FeatureOperations from "./FeatureOperations.js";
-import SoundConfigurationService from "./SoundConfigurationService.js";
 
-class SpeakerDataService extends FeatureOperations {
+class SpeakerStatusService extends FeatureOperations {
   constructor(device) {
-    super(device, "speakerdata");
+    super(device, "speakerstatus");
 
-    // gatt service and characteristic used to communicate with Thingy's speaker data
+    // gatt service and characteristic used to communicate with Thingy's speaker status
     this.service = {
       uuid: this.device.TSS_UUID,
     };
 
     this.characteristics = {
       default: {
-        uuid: this.device.TSS_SPEAKER_DATA_UUID,
-        encoder: this.encodeSpeakerData.bind(this),
+        uuid: this.device.TSS_SPEAKER_STAT_UUID,
+        decoder: this.decodeSpeakerStatus.bind(this),
       },
     };
-
-    this.soundconfigurationservice = new SoundConfigurationService(this);
   }
 
-  async encodeSpeakerData(data) {
+  decodeSpeakerStatus(data) {
     try {
-      if (data.mode === 1) {
-        const dataArray = new Uint8Array(5);
-        const frequency = data.frequency;
-        const duration = data.duration;
-        const volume = data.volume;
+      const speakerStatus = data.getInt8(0);
 
-        dataArray[0] = frequency & 0xff;
-        dataArray[1] = (frequency >> 8) & 0xff;
-        dataArray[2] = duration & 0xff;
-        dataArray[3] = (duration >> 8) & 0xff;
-        dataArray[4] = volume & 0xff;
+      const decodedSpeakerStatus = {
+        status: speakerStatus,
+      };
 
-        return dataArray;
-      } else if (data.mode === 2) {
-        return data.data;
-      } else if (data.mode === 3) {
-        const dataArray = new Uint8Array(1);
-        const sample = data.sample;
-
-        dataArray[0] = sample & 0xff;
-
-        return dataArray;
-      }
+      return decodedSpeakerStatus;
     } catch (error) {
       throw error;
     }
   }
 }
 
-export default SpeakerDataService;
+export default SpeakerStatusService;

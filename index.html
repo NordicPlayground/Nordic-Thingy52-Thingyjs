@@ -6,9 +6,13 @@
   <body>
     <button id="connectBtn">Connect</button>
     <div id="microphone"></div>
+    <input type="file" id="input" name="audio" accept="audio/*">
+    <input type="submit" id="submitBtn">
     <script type="module">
       
       import Thingy from "./index.js";
+      // const fs = require('fs');
+      // var lame = require('lame');
 
       const thingy = new Thingy({logEnabled: true});
 
@@ -21,8 +25,45 @@
       async function start(device) {
         try {
           await device.connect();
-          device.addEventListener("temperature", myLogger);
-          await device.temperature.start();
+          await device.addEventListener("speakerstatus", myLogger);
+          await device.speakerstatus.start();
+          // await device.soundconfiguration.write({speakerMode: 3});
+          // const n = await device.soundconfiguration.read();
+          // console.log(n);
+          // await device.speakerdataservice.write({mode: 1, frequency: 480, duration: 2000, volume: 50});
+          // await device.speakerdata.write({mode: 3, sample: 4});
+          const readStream = fs.createReadStream("8_bit.wav");
+
+          var decoder_8kHz = lame.Decoder();
+
+          decoder_8kHz.on("data", function(data) {
+            device.speakerdata.write({mode: 2, data: data});
+          }); 
+          readStream.pipe(stream);
+          
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      async function play(file) {
+        try {
+          await thingy.connect();
+          await thingy.addEventListener("speakerstatus", myLogger);
+          await thingy.speakerstatus.start();
+          /* await thingy.soundconfiguration.write({speakerMode: 3});
+          await thingy.speakerdata.write({mode: 3, sample: 4}); */
+          await thingy.soundconfiguration.write({speakerMode: 2});
+          /*const n = await thingy.soundconfiguration.read();
+          console.log(n); */
+          // var snippet = new Uint8Array([0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255]);
+          let snippet;
+          for (var i = 0; i < file.byteLength; i += 273) {
+            snippet = new Uint8Array(file.slice(i, i + 273));
+            await thingy.speakerdata.write({mode: 2, data: snippet});
+          }
+          
+          
         } catch (error) {
           console.error(error);
         }
@@ -30,6 +71,18 @@
       
       document.querySelector("#connectBtn").addEventListener("click", async () => {
         start(thingy);
+      });
+      document.querySelector("#submitBtn").addEventListener("click", async () => {
+        var selectedFile = document.getElementById('input').files[0];
+        console.log(selectedFile.name);
+        var reader = new FileReader();
+        reader.readAsArrayBuffer(selectedFile);
+        reader.onloadend = function(e) {
+          var file = reader.result;
+          
+          
+          play(file);
+        }
       });
     </script>
   </body>
