@@ -133,9 +133,11 @@ class Thingy extends EventTarget {
     ];
 
     this.receiveReading = this.receiveReading.bind(this);
+    this.executePostponedOperations = this.executePostponedOperations.bind(this);
 
     this.addEventListener("characteristicvaluechanged", this.receiveReading);
-    this.addEventListener("operationcomplete", this.executeInterruptedOperations);
+    this.addEventListener("availablegatt", this.executePostponedOperations);
+    //this.addEventListener("operationcomplete", this.executeInterruptedOperations);
 
     this.advertisingparameters = new AdvertisingParametersService(this);
     this.microphone = new MicrophoneSensor(this);
@@ -203,6 +205,37 @@ class Thingy extends EventTarget {
     this.dispatchEvent(featureSpecificEvent);
   }
 
+  async executePostponedOperations(round) {
+    if (this.queueOperations) {
+      if (round < 3) {
+        this.executingPostponedOperations = true;
+        let lastOperation = false;
+        let retries = 0;
+
+        while (window.operationQueue.length != 0) {
+          if (retries === 3) {
+            this.executePostponedOperations(round+1);
+          } else {
+            if (!window.busyGatt) {
+              retries = 0;
+              const operation = window.operationQueue.shift();
+
+              if (operation !== lastOperation) {
+                await operation();
+              }
+            } else {
+              await setTimeout(() => {
+                retries++;
+              }, 500 * Math.pow(2, round));
+            }
+          }
+        }
+      }
+ 
+      this.executePostponedOperations = false;
+    }
+  }
+
   async disconnect() {
     try {
       await this.device.gatt.disconnect();
@@ -215,17 +248,22 @@ class Thingy extends EventTarget {
       throw e;
     }
   }
-
-  async executeInterruptedOperations() {
-    if (this.queueOperations) {
-      while (window.operationQueue.length != 0) {
-        if (!window.busyGatt) {
-          const operation = window.operationQueue.shift();
-          await operation();
-        }
-      }
-    }
-  }
 }
 
 export default Thingy;
+
+
+let retries = 0;
+
+    const f = async () => {
+      if (!this.getAvailableGatt()) {
+        if (retries === 3) {
+          this.cancelOperation("read");
+        } else {
+          await setTimeout(() => {
+            retries++;
+  
+            f();
+          }, 500)
+        }
+      } else {

@@ -47,16 +47,16 @@ class FeatureOperations extends EventTarget {
   }
 
   async connect() {
-    if (!window.busyGatt) {
+    if (this.getAvailableGatt()) {
       try {
-        window.busyGatt = true;
+        this.setBusyGatt();
+
         this.service.service = await this.device.server.getPrimaryService(this.service.uuid);
 
         this.characteristic.characteristic = await this.service.service.getCharacteristic(this.characteristic.uuid);
         this.characteristic.connected = true;
 
-        window.busyGatt = false;
-        this.operationExecutedEventDispatcher();
+        this.setAvailableGatt();
 
         if (this.characteristic.verifyAction && this.characteristic.verifyReaction) {
           await this.characteristic.verifyAction();
@@ -68,31 +68,14 @@ class FeatureOperations extends EventTarget {
 
         console.log(`Connected to the ${this.type} feature`);
       } catch (error) {
-        window.busyGatt = false;
-        this.characteristic.connected = false;
-        window.operationQueue.append(this.connect.bind(this));
-        this.operationExecutedEventDispatcher();
+        this.setAvailableGatt();
 
-        throw error;
+        this.characteristic.connected = false;
+        this.postponeOperation(this.connect.bind(this));
       }
     } else {
-      window.operationQueue.append(this.connect.bind(this));
-      this.operationExecutedEventDispatcher();
-
-      const e = new BusyGattError(`Could not connect to the ${this.type} feature at this moment, please try again`);
-      throw e;
+      this.postponeOperation(this.connect.bind(this));
     }
-  }
-
-  notifyError(error) {
-    console.error(`The ${this.type} feature has reported an error: ${error}`);
-
-    const ce = new CustomEvent("error", {detail: {
-      feature: this.type,
-      error
-    }});
-
-    this.device.dispatchEvent(ce);
   }
 
   async _read(returnRaw = false) {
@@ -113,12 +96,11 @@ class FeatureOperations extends EventTarget {
     let retries = 0;
 
     const f = async () => {
-      if (window.busyGatt) {
+      if (!this.getAvailableGatt()) {
         if (retries === 3) {
-          const e = new BusyGattError(`The read operation could not be performed at this time, please try again`);
-          throw e;
+          this.cancelOperation("read");
         } else {
-          setTimeout(() => {
+          await setTimeout(() => {
             retries++;
   
             f();
@@ -126,19 +108,24 @@ class FeatureOperations extends EventTarget {
         }
       } else {
         try {
-          window.busyGatt = true;
+          this.setBusyGatt();
+
           if (returnRaw === true) {
             const rawProp = await this.characteristic.characteristic.readValue();
-            window.busyGatt = false;
+            
+            this.setAvailableGatt();
+
             return Promise.resolve(rawProp);
           } else {
             const prop = await this.characteristic.characteristic.readValue();
-            window.busyGatt = false;
+            
+            this.setAvailableGatt();
+
             return Promise.resolve(this.characteristic.decoder(prop));
           }
         } catch (error) {
-          window.busyGatt = false;
-          throw error;
+          this.setAvailableGatt();
+          this.processError(error);
         }
       }
     }
@@ -169,12 +156,11 @@ class FeatureOperations extends EventTarget {
     let retries = 0;
 
     const f = async () => {
-      if (window.busyGatt) {
+      if (!this.getAvailableGatt()) {
         if (retries === 3) {
-          const e = new BusyGattError(`The write operation could not be performed at this time, please try again`);
-          throw e;
+          this.cancelOperation("write");
         } else {
-          setTimeout(() => {
+          await setTimeout(() => {
             retries++;
   
             f();
@@ -183,30 +169,21 @@ class FeatureOperations extends EventTarget {
       } else {
         try {
           const encodedValue = await this.characteristic.encoder(prop);
-          window.busyGatt = true;
+          this.setBusyGatt();
+
           await this.characteristic.characteristic.writeValue(encodedValue);
-          window.busyGatt = false;
+          
+          this.setAvailableGatt();
+
           return;
         } catch (error) {
-          throw error;
+          this.setAvailableGatt();
+          this.processError(error);
         }
       }
     }
 
     f();
-  }
-
-  busyGattEvent() {
-    return new Event("busygatt");
-  }
-
-  availableGattEvent() {
-    return new Event("availablegatt");
-  }
-
-  operationExecutedEventDispatcher() {
-    const ev = new Event("operationcomplete");
-    this.device.dispatchEvent(ev);
   }
 
   async _notify(enable, verify = false) {
@@ -256,46 +233,42 @@ class FeatureOperations extends EventTarget {
 
     const characteristic = this.characteristic.characteristic;
 
-    if (!window.busyGatt) {
+    if (this.getAvailableGatt()) {
       if (enable) {
         try {
-          window.busyGatt = true;
+          this.setBusyGatt();
+
           const csn = await characteristic.startNotifications();
           csn.addEventListener("characteristicvaluechanged", onReading.bind(this));
-          window.busyGatt = false;
-          this.operationExecutedEventDispatcher();
+          this.setAvailableGatt();
           this.characteristic.notifying = true;
           console.log(`\nNotifications enabled for the ${this.type} feature`);
         } catch (error) {
           this.characteristic.notifying = false;
-          window.busyGatt = false;
-          window.operationQueue.append(this._notify.bind(this));
-          this.operationExecutedEventDispatcher();
+          this.setAvailableGatt();
+          this.postponeOperation(this._notify.bind(this, enable, verify));
           throw error;
         }
       } else {
         try {
-          window.busyGatt = true;
+          this.setBusyGatt();
+
           const csn = await characteristic.stopNotifications();
           csn.removeEventListener("characteristicvaluechanged", onReading.bind(this));
-          window.busyGatt = false;
-          this.operationExecutedEventDispatcher();
+          
+          this.setAvailableGatt();
+
           this.characteristic.notifying = false;
           console.log(`\nNotifications disabled for the ${this.type} feature`);
         } catch (error) {
           this.characteristic.notifying = true;
-          window.busyGatt = false;
-          window.operationQueue.append(this._notify.bind(this));
-          this.operationExecutedEventDispatcher();
-          throw error;
+          this.setAvailableGatt();
+          this.postponeOperation(this._notify.bind(this, enable, verify));
+          this.processError(error);
         }
       }
     } else {
-      window.operationQueue.append(this._notify.bind(this));
-      this.operationExecutedEventDispatcher();
-
-      const e = new BusyGattError(`Could not start the ${this.type} feature at this moment, please try again`);
-      throw e;
+      this.postponeOperation(this._notify.bind(this, enable, verify));
     }
   }
 
@@ -334,6 +307,63 @@ class FeatureOperations extends EventTarget {
     } catch (error) {
       this.notifyError(error);
     }
+  }
+
+  
+  setBusyGatt() {
+    window.busyGatt = true;
+
+    this.device.dispatch(this.busyGattEvent());
+  }
+
+  setAvailableGatt() {
+    window.busyGatt = false;
+
+    this.device.dispatch(this.availableGattEvent());
+  }
+
+  getAvailableGatt() {
+    // awkward format with the not, but more intuitive
+    return !window.busyGatt;
+  }
+
+  postponeOperation(operation) {
+    this.operationQueue.append(operation);
+
+    this.device.dispatch(this.operationPostponedEvent(this.type));
+  }
+
+  cancelOperation(operationName) {
+    console.log(`The device could not execute the ${operationName} method on the ${this.type} feature at this moment. Please try again soon.`);
+
+    this.device.dispatch(this.operationCancelledEvent());
+  }
+
+  busyGattEvent() {
+    return new Event("busygatt");
+  }
+
+  availableGattEvent() {
+    return new Event("availablegatt");
+  }
+
+  operationPostponedEvent(feature) {
+    return new CustomEvent("operationpostponed", {detail: {feature}});
+  }
+
+  operationCancelledEvent() {
+    return new Event("operationcancelled");
+  }
+
+  processError(error) {
+    console.error(`The ${this.type} feature has reported an error: ${error}`);
+
+    const ce = new CustomEvent("error", {detail: {
+      feature: this.type,
+      error
+    }});
+
+    this.device.dispatchEvent(ce);
   }
 }
 
