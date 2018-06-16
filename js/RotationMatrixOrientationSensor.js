@@ -40,7 +40,7 @@ class RotationMatrixOrientationSensor extends FeatureOperations {
       uuid: this.device.TMS_UUID,
     };
 
-    this.characteristics = {
+    this.characteristic = {
       uuid: this.device.TMS_ROT_MATRIX_UUID,
       decoder: this.decodeRotationData.bind(this),
     };

@@ -58,25 +58,14 @@ import EnvironmentConfigurationService from "./EnvironmentConfigurationService.j
 import MotionConfigurationService from "./MotionConfigurationService.js";
 
 class Thingy extends EventTarget {
-  constructor(options = {logEnabled: true, queueOperations: true}) {
+  constructor(options = {logEnabled: true}) {
     super();
 
     this.logEnabled = options.logEnabled;
-    this.queueOperations = options.queueOperations;
 
     if (this.logEnabled) {
       console.log("I am alive!");
     }
-
-    if (window.operationQueue === undefined) {
-      window.operationQueue = [];
-    }
-
-    if (window.busyGatt === undefined) {
-      window.busyGatt = false;
-    }
-
-
 
     // TCS = Thingy Configuration Service
     this.TCS_UUID = "ef680100-9b35-4933-9b10-52ffa9740042";
@@ -132,12 +121,8 @@ class Thingy extends EventTarget {
       this.TSS_UUID,
     ];
 
-    this.receiveReading = this.receiveReading.bind(this);
-    this.executePostponedOperations = this.executePostponedOperations.bind(this);
-
-    this.addEventListener("characteristicvaluechanged", this.receiveReading);
-    this.addEventListener("availablegatt", this.executePostponedOperations);
-    //this.addEventListener("operationcomplete", this.executeInterruptedOperations);
+    this.addEventListener("characteristicvaluechanged", this.receiveReading.bind(this));
+    this.addEventListener("gattavailable", this.executePostponedOperations.bind(this, 0));
 
     this.advertisingparameters = new AdvertisingParametersService(this);
     this.microphone = new MicrophoneSensor(this);
@@ -188,10 +173,31 @@ class Thingy extends EventTarget {
       // Connect to GATT server
       this.server = await this.device.gatt.connect();
 
+      if (window.thingyController === undefined) {
+        window.thingyController = {};
+      }
+
+      if (window.thingyController[this.device.id] === undefined) {
+        window.thingyController[this.device.id] = {};
+      }
+
+      if (window.thingyController[this.device.id].gattBusy === undefined) {
+        window.thingyController[this.device.id].gattBusy = false;
+      }
+
+      if (window.thingyController[this.device.id].operationQueue === undefined) {
+        window.thingyController[this.device.id].operationQueue = [];
+      }
+
+      if (window.thingyController[this.device.id].executingPostponedOperations === undefined) {
+        window.thingyController[this.device.id].executingPostponedOperations = false;
+      }
+
       if (this.logEnabled) {
         console.log(`Connected to "${this.device.name}"`);
       }
     } catch (error) {
+      console.log("betrayed by my own... smh");
       const e = new Error(error);
       throw e;
     }
@@ -205,24 +211,38 @@ class Thingy extends EventTarget {
     this.dispatchEvent(featureSpecificEvent);
   }
 
-  async executePostponedOperations(round) {
-    if (this.queueOperations) {
+  async executePostponedOperations(round, triedOperations = {}) {
+    if (!window.thingyController[this.device.id].executingPostponedOperations) {
       if (round < 3) {
-        this.executingPostponedOperations = true;
-        let lastOperation = false;
+        window.thingyController[this.device.id].executingPostponedOperations = true;
         let retries = 0;
 
-        while (window.operationQueue.length != 0) {
+        while (window.thingyController[this.device.id].operationQueue.length > 0) {
           if (retries === 3) {
-            this.executePostponedOperations(round+1);
+            window.thingyController[this.device.id].executingPostponedOperations = false;
+            this.executePostponedOperations(round+1, triedOperations);
+            return;
           } else {
-            if (!window.busyGatt) {
+            if (!window.thingyController[this.device.id].gattBusy) {
               retries = 0;
-              const operation = window.operationQueue.shift();
+              const operation = window.thingyController[this.device.id].operationQueue.shift();
 
-              if (operation !== lastOperation) {
-                await operation();
+              if (!(operation.feature in triedOperations)) {
+                triedOperations[operation.feature] = {};
               }
+
+              if (!(operation.methodName in triedOperations)) {
+                triedOperations[operation.feature][triedOperations[operation.methodName]] = 1;
+              }
+
+              if (triedOperations[operation.feature][triedOperations[operation.methodName]] < 4) {
+                await operation.method();
+              } else {
+                // we have tried to perform a previously failed operation three more times.
+                // Since it could not be completed, an event is dispatched under 'operationcancelled'
+              }
+
+      
             } else {
               await setTimeout(() => {
                 retries++;
@@ -232,13 +252,25 @@ class Thingy extends EventTarget {
         }
       }
  
-      this.executePostponedOperations = false;
+      window.thingyController[this.device.id].executingPostponedOperations = false;
     }
+  }
+
+  dispatchOperationCancelledEvent(feature, methodName, method = undefined) {
+    if (this.logEnabled) {
+      console.log(`The ${methodName} method on the ${feature} feature could not be performed at this moment. An event has been dispatched under the name 'operationcancelled'`);
+    }
+
+    const dispatchObject = (method == undefined ? {feature, methodName, method} : {feature, methodName} );
+
+    this.device.dispatchEvent(new CustomEvent("operationcancelled", {detail: dispatchObject}));
   }
 
   async disconnect() {
     try {
       await this.device.gatt.disconnect();
+
+      window.thingyController[this.device.id] = undefined;
       
       if (this.logEnabled) {
         console.log(`Disconnected from "${this.device.name}"`);
@@ -251,19 +283,3 @@ class Thingy extends EventTarget {
 }
 
 export default Thingy;
-
-
-let retries = 0;
-
-    const f = async () => {
-      if (!this.getAvailableGatt()) {
-        if (retries === 3) {
-          this.cancelOperation("read");
-        } else {
-          await setTimeout(() => {
-            retries++;
-  
-            f();
-          }, 500)
-        }
-      } else {

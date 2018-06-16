@@ -77,10 +77,10 @@ class Microphone extends FeatureOperations {
   }
 
   async verifyMicrophoneReaction(data) {
-    if (!window.busyGatt) {
+    if (this.getGattAvailable()) {
       try {
         const microphoneData = data.detail.data;
-        await this._notify(false, "default", true);
+        await this._notify(false, true);
         this.removeEventListener("verifyReaction", this.characteristic.verifyReaction);
 
         if (microphoneData.byteLength === 131) {

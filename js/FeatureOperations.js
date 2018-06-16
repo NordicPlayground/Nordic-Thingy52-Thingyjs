@@ -31,13 +31,6 @@
 
 import EventTarget from "./EventTarget.js";
 
-class BusyGattError extends Error {
-  constructor(message) {
-    super();
-    this.message = message;
-  }
-}
-
 class FeatureOperations extends EventTarget {
   constructor(device, type) {
     super();
@@ -47,17 +40,18 @@ class FeatureOperations extends EventTarget {
   }
 
   async connect() {
-    if (this.getAvailableGatt()) {
+    if (this.getGattAvailable()) {
       try {
-        this.setBusyGatt();
+        this.setGattBusy();
 
         this.service.service = await this.device.server.getPrimaryService(this.service.uuid);
 
         this.characteristic.characteristic = await this.service.service.getCharacteristic(this.characteristic.uuid);
         this.characteristic.connected = true;
+        this.characteristic.notifying = false;
 
-        this.setAvailableGatt();
-
+        this.setGattAvailable();
+  
         if (this.characteristic.verifyAction && this.characteristic.verifyReaction) {
           await this.characteristic.verifyAction();
 
@@ -68,13 +62,13 @@ class FeatureOperations extends EventTarget {
 
         console.log(`Connected to the ${this.type} feature`);
       } catch (error) {
-        this.setAvailableGatt();
+        this.setGattAvailable();
 
         this.characteristic.connected = false;
-        this.postponeOperation(this.connect.bind(this));
+        this.postponeOperation("connect", this.connect.bind(this));
       }
     } else {
-      this.postponeOperation(this.connect.bind(this));
+      this.postponeOperation("connect", this.connect.bind(this));
     }
   }
 
@@ -96,41 +90,41 @@ class FeatureOperations extends EventTarget {
     let retries = 0;
 
     const f = async () => {
-      if (!this.getAvailableGatt()) {
+      if (!this.getGattAvailable()) {
         if (retries === 3) {
-          this.cancelOperation("read");
+          this.device.dispatchOperationCancelledEvent(this.type, "read");
         } else {
-          await setTimeout(() => {
+          await setTimeout(async () => {
             retries++;
   
-            f();
+            await f();
           }, 500)
         }
       } else {
         try {
-          this.setBusyGatt();
+          this.setGattBusy();
 
           if (returnRaw === true) {
             const rawProp = await this.characteristic.characteristic.readValue();
             
-            this.setAvailableGatt();
+            this.setGattAvailable();
 
             return Promise.resolve(rawProp);
           } else {
             const prop = await this.characteristic.characteristic.readValue();
             
-            this.setAvailableGatt();
+            this.setGattAvailable();
 
             return Promise.resolve(this.characteristic.decoder(prop));
           }
         } catch (error) {
-          this.setAvailableGatt();
+          this.setGattAvailable();
           this.processError(error);
         }
       }
     }
 
-    f();
+    await f();
   }
 
   async _write(prop) {
@@ -156,34 +150,34 @@ class FeatureOperations extends EventTarget {
     let retries = 0;
 
     const f = async () => {
-      if (!this.getAvailableGatt()) {
+      if (!this.getGattAvailable()) {
         if (retries === 3) {
-          this.cancelOperation("write");
+          this.device.dispatchOperationCancelledEvent(this.type, "write");
         } else {
-          await setTimeout(() => {
+          await setTimeout(async () => {
             retries++;
   
-            f();
+            await f();
           }, 500)
         }
       } else {
         try {
           const encodedValue = await this.characteristic.encoder(prop);
-          this.setBusyGatt();
+          this.setGattBusy();
 
           await this.characteristic.characteristic.writeValue(encodedValue);
           
-          this.setAvailableGatt();
+          this.setGattAvailable();
 
           return;
         } catch (error) {
-          this.setAvailableGatt();
+          this.setGattAvailable();
           this.processError(error);
         }
       }
     }
 
-    f();
+    await f();
   }
 
   async _notify(enable, verify = false) {
@@ -199,6 +193,11 @@ class FeatureOperations extends EventTarget {
     if (!this.hasProperty("notify")) {
       const e = new Error(`The ${this.type} feature does not support the start/stop methods`);
       throw e;
+    }
+
+    if (enable === this.characteristic.notifying) {
+      console.log(`The ${this.type} feature has already ${(this.characteristic.notifying ? "enabled" : "disabled")} notifications`);
+      return;
     }
 
     // maybe we can't bind this function if we want the eventListener to be removed properly
@@ -233,54 +232,53 @@ class FeatureOperations extends EventTarget {
 
     const characteristic = this.characteristic.characteristic;
 
-    if (this.getAvailableGatt()) {
+    if (this.getGattAvailable()) {
       if (enable) {
         try {
-          this.setBusyGatt();
+          this.setGattBusy();
 
           const csn = await characteristic.startNotifications();
           csn.addEventListener("characteristicvaluechanged", onReading.bind(this));
-          this.setAvailableGatt();
+          this.setGattAvailable();
           this.characteristic.notifying = true;
-          console.log(`\nNotifications enabled for the ${this.type} feature`);
+          console.log(`Notifications enabled for the ${this.type} feature`);
         } catch (error) {
           this.characteristic.notifying = false;
-          this.setAvailableGatt();
-          this.postponeOperation(this._notify.bind(this, enable, verify));
+          this.setGattAvailable();
+          this.postponeOperation("notify", this._notify.bind(this, enable, verify));
           throw error;
         }
       } else {
         try {
-          this.setBusyGatt();
-
+          this.setGattBusy();
           const csn = await characteristic.stopNotifications();
           csn.removeEventListener("characteristicvaluechanged", onReading.bind(this));
           
-          this.setAvailableGatt();
+          this.setGattAvailable();
 
           this.characteristic.notifying = false;
-          console.log(`\nNotifications disabled for the ${this.type} feature`);
+          console.log(`Notifications disabled for the ${this.type} feature`);
         } catch (error) {
           this.characteristic.notifying = true;
-          this.setAvailableGatt();
-          this.postponeOperation(this._notify.bind(this, enable, verify));
+          this.setGattAvailable();
+          this.postponeOperation("notify", this._notify.bind(this, enable, verify));
           this.processError(error);
         }
       }
     } else {
-      this.postponeOperation(this._notify.bind(this, enable, verify));
+      this.postponeOperation("notify", this._notify.bind(this, enable, verify));
     }
   }
 
   hasProperty(property) {
-    return (this.characteristic.properties[property] === true ? true : false);
+    return (this.characteristic.characteristic.properties[property] === true ? true : false);
   }
 
   async start() {
     try {
       await this._notify(true);
     } catch (error) {
-      this.notifyError(error);
+      this.processError(error);
     }
   }
 
@@ -288,7 +286,7 @@ class FeatureOperations extends EventTarget {
     try {
       await this._notify(false);
     } catch (error) {
-      this.notifyError(error);
+      this.processError(error);
     }
   }
 
@@ -297,7 +295,7 @@ class FeatureOperations extends EventTarget {
       const val = await this._read();
       return val;
     } catch (error) {
-      this.notifyError(error);
+      this.processError(error);
     }
   }
 
@@ -305,54 +303,28 @@ class FeatureOperations extends EventTarget {
     try {
       await this._write(data);
     } catch (error) {
-      this.notifyError(error);
+      this.processError(error);
     }
   }
 
   
-  setBusyGatt() {
-    window.busyGatt = true;
-
-    this.device.dispatch(this.busyGattEvent());
+  setGattBusy() {
+    window.thingyController[this.device.device.id].gattBusy = true;
   }
 
-  setAvailableGatt() {
-    window.busyGatt = false;
+  setGattAvailable() {
+    window.thingyController[this.device.device.id].gattBusy = false;
 
-    this.device.dispatch(this.availableGattEvent());
+    this.device.dispatchEvent(new Event("gattavailable"));
   }
 
-  getAvailableGatt() {
+  getGattAvailable() {
     // awkward format with the not, but more intuitive
-    return !window.busyGatt;
+    return !window.thingyController[this.device.device.id].gattBusy;
   }
 
-  postponeOperation(operation) {
-    this.operationQueue.append(operation);
-
-    this.device.dispatch(this.operationPostponedEvent(this.type));
-  }
-
-  cancelOperation(operationName) {
-    console.log(`The device could not execute the ${operationName} method on the ${this.type} feature at this moment. Please try again soon.`);
-
-    this.device.dispatch(this.operationCancelledEvent());
-  }
-
-  busyGattEvent() {
-    return new Event("busygatt");
-  }
-
-  availableGattEvent() {
-    return new Event("availablegatt");
-  }
-
-  operationPostponedEvent(feature) {
-    return new CustomEvent("operationpostponed", {detail: {feature}});
-  }
-
-  operationCancelledEvent() {
-    return new Event("operationcancelled");
+  postponeOperation(methodName, method) {
+    window.thingyController[this.device.device.id].operationQueue.push({feature: this.type, methodName, method});
   }
 
   processError(error) {
