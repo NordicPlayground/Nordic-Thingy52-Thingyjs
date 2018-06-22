@@ -39,10 +39,10 @@ class FeatureOperations extends EventTarget {
     this.latestReading = new Map(); 
   }
 
-  async connect(postponed = false) {
+  async _connect(postponed = false) {
     if (("connected" in this.characteristic) && this.characteristic.connected) {
       console.log(`You're already connected to the ${this.type} feature`);
-      return;
+      return true;
     }
 
     if (this.getGattAvailable()) {
@@ -77,13 +77,13 @@ class FeatureOperations extends EventTarget {
         this.setGattAvailable();
 
         this.characteristic.connected = false;
-        this.postponeOperation("connect", this.connect.bind(this, true));
+        this.postponeOperation("connect", this._connect.bind(this, true));
 
         this.processError(error);
         return false;
       }
     } else {
-      this.postponeOperation("connect", this.connect.bind(this, true));
+      this.postponeOperation("connect", this._connect.bind(this, true));
       return false;
     }
   }
@@ -91,7 +91,7 @@ class FeatureOperations extends EventTarget {
   async _read(returnRaw = false) {
     try {
       if (!this.characteristic.connected) {
-        const connected = await this.connect();
+        const connected = await this._connect();
 
         if (!connected) {
           const e = new Error(`As we couldn't connect to the ${this.type} feature, the read operation can't be executed`);
@@ -167,7 +167,7 @@ class FeatureOperations extends EventTarget {
       }
 
       if (!this.characteristic.connected) {
-        const connected = await this.connect();
+        const connected = await this._connect();
 
         if (!connected) {
           const e = new Error(`As we couldn't connect to the ${this.type} feature, the write operation can't be executed`);
@@ -240,7 +240,7 @@ class FeatureOperations extends EventTarget {
     }
 
     if (!this.characteristic.connected) {
-      const connected = await this.connect();
+      const connected = await this._connect();
 
       if (!connected) {
         this.postponeOperation("notify", this._notify.bind(this, enable, verify, true));
@@ -369,7 +369,9 @@ class FeatureOperations extends EventTarget {
     this.device.dispatchEvent(new Event("gattavailable"));
   }
 
-  dispatchPostponedOperationSuccessful
+  dispatchPostponedOperationSuccessful() {
+    this.device.dispatchEvent("postponedoperationsuccessful");
+  }
 
   getGattAvailable() {
     return !window.thingyController[this.device.device.id].gattBusy;

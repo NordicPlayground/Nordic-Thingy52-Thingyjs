@@ -215,13 +215,21 @@ class Thingy extends EventTarget {
   // return true/false (or promises) from all functions (connect, notify....)
   // and use those return values to update numExecutedOperations inside
   // executePostponedOperations ??
-  handleGattAvailable() {
+  /*handleGattAvailable() {
     if (window.thingyController[this.device.id].executingPostponedOperations) {
       window.thingyController[this.device.id].numTotalOperationsExecuted += 1;
     } else {
       window.thingyController[this.device.id].numTotalOperationsExecuted = 1;
-      window.thingyController[this.device.id].newlyAddedOperations = [];
 
+      this.executePostponedOperations();
+    }
+  }*/
+
+  handleGattAvailable() {
+    // to verify that progress is being made (i.e that operations are at least running (without giving any thought to its outcome))
+    window.thingyController[this.device.id].numCompletedOperationCounter++;
+
+    if (!window.thingyController[this.device.id].executingPostponedOperations && window.thingyController[this.device.id].operationQueue.length > 0) {
       this.executePostponedOperations();
     }
   }
@@ -231,43 +239,73 @@ class Thingy extends EventTarget {
   // should instead listen to available gatt, and end the operation
   // based on whether or not successful operations are reported
   async executePostponedOperations() {
-    window.thingyController[this.device.id].executingPostponedOperations = true;
-    let numTotalOperationsExecutedSinceLastIteration;
-    let numCurrentTotalOperationsExecuted = 0;
+    try {
+      window.thingyController[this.device.id].executingPostponedOperations = true;
 
-    let completed = 0;
+      loop1:
+      while (window.thingyController[this.device.id].operationQueue.length > 0) {
+        const operation = window.thingyController[this.device.id].operationQueue.shift();
+        window.thingyController[this.device.id].numOperationsExecuted = 0;
 
-    while (window.thingyController[this.device.id].operationQueue.length > 0) {
-      numTotalOperationsExecutedSinceLastIteration = window.thingyController[this.device.id].numTotalOperationsExecuted - numCurrentTotalOperationsExecuted;
-      numCurrentTotalOperationsExecuted = window.thingyController[this.device.id].numTotalOperationsExecuted;
+        // don't differentiate between the types of operations performed and the reasons for their potential failure
+        loop2:
+        for (let i=0;i<3;i++) {
+          setTimeout(async () => {
+            const successful = await operation.func();
 
-      const operation = window.thingyController[this.device.id].operationQueue.shift();
-      const successful = await operation.func();
+            // suggests that the operation either completed or that it was requeued
+            if (successful === true) {
+              break;
+            }
 
-      if (!successful) {
+            // on last iteration, if the number of operations executed while we tried to perform the current one
+            // is less than or equal to the number of times we performed the current one, something must be wrong
+            // with the current one.
+            if (i === 2 && window.thingyController[this.device.id].numOperationsExecuted < 3) {
+              // cancel operation and continue
+            }
+          }, 100);
+        }
+        counter = 0;
+
+        while (counter < 3) {
+          counter++;
+          const successful = await operation.func();
+
+          if (successful === true) {
+            numSuccessfulOperations++;
+          }
+
+
+        }
+
+        if (successful === true) {
+          numSuccessfulOperations++;
+        } else if
+
+        if (numTotalOperationsExecutedSinceLastIteration === 0 && !successful) {
+          
+        }
+
+
+
+
+
+
+          let readded = false;
+          let i = 0;
+
+          while (i<window.thingyController[this.device.id].newlyOperations.length;
+          window.thingyController[this.device.id].triedOperations.push(operation);
+        }
+
+
+
         
+        window.thingyController[this.device.id].executingPostponedOperations = false;
+      } catch (error) {
+
       }
-
-      if (numTotalOperationsExecutedSinceLastIteration === 0 && !successful) {
-        
-      }
-
-
-
-
-
-
-        let readded = false;
-        let i = 0;
-
-        while (i<window.thingyController[this.device.id].newlyOperations.length;
-        window.thingyController[this.device.id].triedOperations.push(operation);
-      }
-
-
-
-      
-      window.thingyController[this.device.id].executingPostponedOperations = false;
 
     }
 
@@ -346,7 +384,7 @@ class Thingy extends EventTarget {
 
   dispatchOperationCancelledEvent(feature, method, func = undefined) {
     if (this.logEnabled) {
-      console.log(`The ${method} method on the ${feature} feature could not be performed at this moment. An event has been dispatched under the name 'operationcancelled'`);
+      console.log(`The ${method} operation on the ${feature} feature could not be performed at this moment. An event containing the operation's details has been dispatched under the name 'operationcancelled'`);
     }
 
     const dispatchObject = (func === undefined ? {feature, method} : {feature, method, func} );
