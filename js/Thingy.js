@@ -122,7 +122,7 @@ class Thingy extends EventTarget {
     ];
 
     this.addEventListener("characteristicvaluechanged", this.receiveReading.bind(this));
-    this.addEventListener("gattavailable", this.executePostponedOperations.bind(this, 0));
+    this.addEventListener("gattavailable", this.executePostponedOperations.bind(this));
 
     this.advertisingparameters = new AdvertisingParametersService(this);
     this.microphone = new MicrophoneSensor(this);
@@ -211,8 +211,95 @@ class Thingy extends EventTarget {
     this.dispatchEvent(featureSpecificEvent);
   }
 
+
+  // return true/false (or promises) from all functions (connect, notify....)
+  // and use those return values to update numExecutedOperations inside
+  // executePostponedOperations ??
+  handleGattAvailable() {
+    if (window.thingyController[this.device.id].executingPostponedOperations) {
+      window.thingyController[this.device.id].numTotalOperationsExecuted += 1;
+    } else {
+      window.thingyController[this.device.id].numTotalOperationsExecuted = 1;
+      window.thingyController[this.device.id].newlyAddedOperations = [];
+
+      this.executePostponedOperations();
+    }
+  }
+
+
+  // will have to rewrite, shouldn't use exponential back off
+  // should instead listen to available gatt, and end the operation
+  // based on whether or not successful operations are reported
+  async executePostponedOperations() {
+    window.thingyController[this.device.id].executingPostponedOperations = true;
+    let numTotalOperationsExecutedSinceLastIteration;
+    let numCurrentTotalOperationsExecuted = 0;
+
+    let completed = 0;
+
+    while (window.thingyController[this.device.id].operationQueue.length > 0) {
+      numTotalOperationsExecutedSinceLastIteration = window.thingyController[this.device.id].numTotalOperationsExecuted - numCurrentTotalOperationsExecuted;
+      numCurrentTotalOperationsExecuted = window.thingyController[this.device.id].numTotalOperationsExecuted;
+
+      const operation = window.thingyController[this.device.id].operationQueue.shift();
+      const successful = await operation.func();
+
+      if (!successful) {
+        
+      }
+
+      if (numTotalOperationsExecutedSinceLastIteration === 0 && !successful) {
+        
+      }
+
+
+
+
+
+
+        let readded = false;
+        let i = 0;
+
+        while (i<window.thingyController[this.device.id].newlyOperations.length;
+        window.thingyController[this.device.id].triedOperations.push(operation);
+      }
+
+
+
+      
+      window.thingyController[this.device.id].executingPostponedOperations = false;
+
+    }
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   async executePostponedOperations(round, triedOperations = {}) {
-    if (!window.thingyController[this.device.id].executingPostponedOperations) {
+    
       if (round < 3) {
         window.thingyController[this.device.id].executingPostponedOperations = true;
         let retries = 0;
@@ -231,18 +318,17 @@ class Thingy extends EventTarget {
                 triedOperations[operation.feature] = {};
               }
 
-              if (!(operation.methodName in triedOperations)) {
-                triedOperations[operation.feature][triedOperations[operation.methodName]] = 1;
+              if (!(operation.method in triedOperations)) {
+                triedOperations[operation.feature][triedOperations[operation.method]] = 1;
               }
 
-              if (triedOperations[operation.feature][triedOperations[operation.methodName]] < 4) {
-                await operation.method();
+              if (triedOperations[operation.feature][triedOperations[operation.method]] < 4) {
+                await operation.func();
               } else {
                 // we have tried to perform a previously failed operation three more times.
                 // Since it could not be completed, an event is dispatched under 'operationcancelled'
+                this.dispatchOperationCancelledEvent(operation.feature, operation.method, operation.func);
               }
-
-      
             } else {
               await setTimeout(() => {
                 retries++;
@@ -250,18 +336,20 @@ class Thingy extends EventTarget {
             }
           }
         }
+      } else {
+        // Something seems to obstruct 
       }
  
       window.thingyController[this.device.id].executingPostponedOperations = false;
     }
   }
 
-  dispatchOperationCancelledEvent(feature, methodName, method = undefined) {
+  dispatchOperationCancelledEvent(feature, method, func = undefined) {
     if (this.logEnabled) {
-      console.log(`The ${methodName} method on the ${feature} feature could not be performed at this moment. An event has been dispatched under the name 'operationcancelled'`);
+      console.log(`The ${method} method on the ${feature} feature could not be performed at this moment. An event has been dispatched under the name 'operationcancelled'`);
     }
 
-    const dispatchObject = (method == undefined ? {feature, methodName, method} : {feature, methodName} );
+    const dispatchObject = (func === undefined ? {feature, method} : {feature, method, func} );
 
     this.device.dispatchEvent(new CustomEvent("operationcancelled", {detail: dispatchObject}));
   }

@@ -39,7 +39,12 @@ class FeatureOperations extends EventTarget {
     this.latestReading = new Map(); 
   }
 
-  async connect() {
+  async connect(postponed = false) {
+    if (("connected" in this.characteristic) && this.characteristic.connected) {
+      console.log(`You're already connected to the ${this.type} feature`);
+      return;
+    }
+
     if (this.getGattAvailable()) {
       try {
         this.setGattBusy();
@@ -47,226 +52,289 @@ class FeatureOperations extends EventTarget {
         this.service.service = await this.device.server.getPrimaryService(this.service.uuid);
 
         this.characteristic.characteristic = await this.service.service.getCharacteristic(this.characteristic.uuid);
+        this.setGattAvailable();
         this.characteristic.connected = true;
         this.characteristic.notifying = false;
 
-        this.setGattAvailable();
+        
   
         if (this.characteristic.verifyAction && this.characteristic.verifyReaction) {
           await this.characteristic.verifyAction();
 
           this.addEventListener("verifyReaction", this.characteristic.verifyReaction);
 
-          await this._notify(true, true);
+          const verifyValue = await this._notify(true, true);
+
+          // something needs to be done here depending on the value returned
+          // by the functions over. Could prove difficult, will have to see if
+          // I can alter how verifyAction & verifyReaction works, as it's
+          // only used by the microphone per now
         }
 
         console.log(`Connected to the ${this.type} feature`);
+        return true;
       } catch (error) {
         this.setGattAvailable();
 
         this.characteristic.connected = false;
-        this.postponeOperation("connect", this.connect.bind(this));
+        this.postponeOperation("connect", this.connect.bind(this, true));
+
+        this.processError(error);
+        return false;
       }
     } else {
-      this.postponeOperation("connect", this.connect.bind(this));
+      this.postponeOperation("connect", this.connect.bind(this, true));
+      return false;
     }
   }
 
   async _read(returnRaw = false) {
-    if (!this.characteristic.connected) {
-      await this.connect();
-    }
-  
-    if (!this.hasProperty("read")) {
-      const e = new Error(`The ${this.type} feature does not support the read method`);
-      throw e;
-    }
+    try {
+      if (!this.characteristic.connected) {
+        const connected = await this.connect();
 
-    if (!this.characteristic.decoder) {
-      const e = new Error("The characteristic you're trying to write does not have a specified decoder");
-      throw e;
-    }
-
-    let retries = 0;
-
-    const f = async () => {
-      if (!this.getGattAvailable()) {
-        if (retries === 3) {
-          this.device.dispatchOperationCancelledEvent(this.type, "read");
-        } else {
-          await setTimeout(async () => {
-            retries++;
-  
-            await f();
-          }, 500)
-        }
-      } else {
-        try {
-          this.setGattBusy();
-
-          if (returnRaw === true) {
-            const rawProp = await this.characteristic.characteristic.readValue();
-            
-            this.setGattAvailable();
-
-            return Promise.resolve(rawProp);
-          } else {
-            const prop = await this.characteristic.characteristic.readValue();
-            
-            this.setGattAvailable();
-
-            return Promise.resolve(this.characteristic.decoder(prop));
-          }
-        } catch (error) {
-          this.setGattAvailable();
-          this.processError(error);
+        if (!connected) {
+          const e = new Error(`As we couldn't connect to the ${this.type} feature, the read operation can't be executed`);
+          this.processError(e);
+          return false;
         }
       }
-    }
+    
+      if (!this.hasProperty("read")) {
+        const e = new Error(`The ${this.type} feature does not support the read method`);
+        this.processError(e);
+        return false;
+      }
 
-    await f();
+      if (!this.characteristic.decoder) {
+        const e = new Error("The characteristic you're trying to write does not have a specified decoder");
+        this.processError(e);
+        return false;
+      }
+
+      let retries = 0;
+
+      const f = async () => {
+        if (this.getGattAvailable()) {
+          try {
+            this.setGattBusy();
+
+            if (returnRaw === true) {
+              const rawProp = await this.characteristic.characteristic.readValue();
+              
+              this.setGattAvailable();
+
+              return rawProp;
+            } else {
+              const prop = await this.characteristic.characteristic.readValue();
+              this.setGattAvailable();
+
+              return this.characteristic.decoder(prop);
+            }
+          } catch (error) {
+            this.setGattAvailable();
+            this.processError(error);
+            return false;
+          }
+        } else {
+          if (retries === 3) {
+            this.device.dispatchOperationCancelledEvent(this.type, "read");
+            // se på senere
+            return false;
+          } else {
+            await setTimeout(async () => {
+              retries++;
+    
+              return await f();
+            }, 500);
+          }
+        }
+      }
+
+      return await f();
+    } catch (error) {
+      this.processError(error);
+      return false;
+    }
   }
 
   async _write(prop) {
-    if (prop === undefined) {
-      const e = new Error("You have to write a non-empty body");
-      throw e;
-    }
+    try {
+      if (prop === undefined) {
+        const e = new Error("You have to write a non-empty body");
+        this.processError(e);
+        return false;
+      }
 
-    if (!this.characteristic.connected) {
-      await this.connect();
-    }
+      if (!this.characteristic.connected) {
+        const connected = await this.connect();
 
-    if (!this.hasProperty("write")) {
-      const e = new Error(`The ${this.type} feature does not support the write method`);
-      throw e;
-    }
-
-    if (!this.characteristic.encoder) {
-      const e = new Error("The characteristic you're trying to write does not have a specified encoder");
-      throw e;
-    }
-
-    let retries = 0;
-
-    const f = async () => {
-      if (!this.getGattAvailable()) {
-        if (retries === 3) {
-          this.device.dispatchOperationCancelledEvent(this.type, "write");
-        } else {
-          await setTimeout(async () => {
-            retries++;
-  
-            await f();
-          }, 500)
-        }
-      } else {
-        try {
-          const encodedValue = await this.characteristic.encoder(prop);
-          this.setGattBusy();
-
-          await this.characteristic.characteristic.writeValue(encodedValue);
-          
-          this.setGattAvailable();
-
-          return;
-        } catch (error) {
-          this.setGattAvailable();
-          this.processError(error);
+        if (!connected) {
+          const e = new Error(`As we couldn't connect to the ${this.type} feature, the write operation can't be executed`);
+          this.processError(e);
+          return false;
         }
       }
-    }
 
-    await f();
+      if (!this.hasProperty("write")) {
+        const e = new Error(`The ${this.type} feature does not support the write method`);
+        this.processError(e);
+        return false;
+      }
+
+      if (!this.characteristic.encoder) {
+        const e = new Error("The characteristic you're trying to write does not have a specified encoder");
+        this.processError(e);
+        return false;
+      }
+
+      let retries = 0;
+
+      const f = async () => {
+        if (this.getGattAvailable()) {
+          try {
+            this.setGattBusy();
+            const encodedValue = await this.characteristic.encoder(prop);
+
+            // TODO husk å sjekke denne
+            await this.characteristic.characteristic.writeValue(encodedValue)
+            .then(feedback => {
+              console.log(feedback);
+            });
+
+
+            
+            this.setGattAvailable();
+
+            return true;
+          } catch (error) {
+            this.setGattAvailable();
+            this.processError(error);
+            return false;
+          }
+        } else {
+          if (retries === 3) {
+            this.device.dispatchOperationCancelledEvent(this.type, "write");
+            return false;
+          } else {
+            await setTimeout(async () => {
+              retries++;
+              return await f();
+            }, 500);
+          }
+        }
+      }
+
+      return await f();
+    } catch (error) {
+      this.processError(error);
+      return false;
+    }
   }
 
-  async _notify(enable, verify = false) {
+  async _notify(enable, verify = false, postponed = false) {
     if (!(enable === true || enable === false)) {
       const e = new Error("You have to specify the enable parameter (true/false)");
-      throw e;
+      this.processError(e);
+      return;
     }
 
     if (!this.characteristic.connected) {
-      await this.connect();
+      const connected = await this.connect();
+
+      if (!connected) {
+        this.postponeOperation("notify", this._notify.bind(this, enable, verify, true));
+        return false;
+      }
     }
 
     if (!this.hasProperty("notify")) {
       const e = new Error(`The ${this.type} feature does not support the start/stop methods`);
-      throw e;
+      this.processError(e);
+      return;
     }
 
     if (enable === this.characteristic.notifying) {
       console.log(`The ${this.type} feature has already ${(this.characteristic.notifying ? "enabled" : "disabled")} notifications`);
-      return;
+      // could also just return, but technically the operation 
+      // completed successfully as the desired outcome was achieved
+      return true;
     }
-
-    // maybe we can't bind this function if we want the eventListener to be removed properly
-    const onReading = (e) => {
-      const eventData = e.target.value;
-      const decodedData = this.characteristic.decoder(eventData);
-
-      let ce;
-
-      if (verify) {
-        ce = new CustomEvent("verifyReaction", {detail: {feature: this.type, data: decodedData}});
-        this.dispatchEvent(ce);
-      } else {
-        this.latestReading.clear();
-
-        for (let elem in decodedData) {
-          this.latestReading.set(elem, decodedData[elem]);
-        }
-
-        const e = new Event("reading");
-        this.dispatchEvent(e);
-
-        ce = new CustomEvent("characteristicvaluechanged", {detail: {feature: this.type, data: decodedData}});
-        this.device.dispatchEvent(ce);
-      }
-    };
 
     if (!this.characteristic.decoder) {
       const e = new Error("The characteristic you're trying to notify does not have a specified decoder");
-      throw e;
+      this.processError(e);
+      return;
     }
+
+    const onReading = (e) => {
+      try {
+        const decodedData = this.characteristic.decoder(e.target.value);
+        let ce;
+
+        if (verify) {
+          ce = new CustomEvent("verifyReaction", {detail: {feature: this.type, data: decodedData}});
+          this.dispatchEvent(ce);
+        } else {
+          this.latestReading.clear();
+
+          for (let elem in decodedData) {
+            this.latestReading.set(elem, decodedData[elem]);
+          }
+
+          const e = new Event("reading");
+          this.dispatchEvent(e);
+
+          ce = new CustomEvent("characteristicvaluechanged", {detail: {feature: this.type, data: decodedData}});
+          this.device.dispatchEvent(ce);
+        }
+      } catch (error) {
+        // have to find a way to remove event listeners from characteristics
+      } 
+    };
 
     const characteristic = this.characteristic.characteristic;
 
     if (this.getGattAvailable()) {
+      this.setGattBusy();
       if (enable) {
         try {
-          this.setGattBusy();
-
           const csn = await characteristic.startNotifications();
-          csn.addEventListener("characteristicvaluechanged", onReading.bind(this));
           this.setGattAvailable();
+
+          csn.addEventListener("characteristicvaluechanged", onReading.bind(this));
+          
           this.characteristic.notifying = true;
           console.log(`Notifications enabled for the ${this.type} feature`);
+          return true;
         } catch (error) {
-          this.characteristic.notifying = false;
           this.setGattAvailable();
-          this.postponeOperation("notify", this._notify.bind(this, enable, verify));
-          throw error;
+          this.characteristic.notifying = false;
+          this.postponeOperation("notify", this._notify.bind(this, enable, verify, true));
+          this.processError(error);
+          return false;
         }
       } else {
         try {
-          this.setGattBusy();
           const csn = await characteristic.stopNotifications();
-          csn.removeEventListener("characteristicvaluechanged", onReading.bind(this));
-          
           this.setGattAvailable();
+
+          csn.removeEventListener("characteristicvaluechanged", onReading.bind(this));
 
           this.characteristic.notifying = false;
           console.log(`Notifications disabled for the ${this.type} feature`);
+          return true;
         } catch (error) {
-          this.characteristic.notifying = true;
           this.setGattAvailable();
-          this.postponeOperation("notify", this._notify.bind(this, enable, verify));
+          this.characteristic.notifying = true;
+          this.postponeOperation("notify", this._notify.bind(this, enable, verify, true));
           this.processError(error);
+          return false;
         }
       }
     } else {
-      this.postponeOperation("notify", this._notify.bind(this, enable, verify));
+      this.postponeOperation("notify", this._notify.bind(this, enable, verify, true));
+      return false;
     }
   }
 
@@ -275,36 +343,19 @@ class FeatureOperations extends EventTarget {
   }
 
   async start() {
-    try {
-      await this._notify(true);
-    } catch (error) {
-      this.processError(error);
-    }
+      return await this._notify(true);
   }
 
   async stop() {
-    try {
-      await this._notify(false);
-    } catch (error) {
-      this.processError(error);
-    }
+    return await this._notify(false);
   }
 
   async read() {
-    try {
-      const val = await this._read();
-      return val;
-    } catch (error) {
-      this.processError(error);
-    }
+    return await this._read();
   }
 
   async write(data) {
-    try {
-      await this._write(data);
-    } catch (error) {
-      this.processError(error);
-    }
+    return await this._write(data);
   }
 
   
@@ -318,13 +369,15 @@ class FeatureOperations extends EventTarget {
     this.device.dispatchEvent(new Event("gattavailable"));
   }
 
+  dispatchPostponedOperationSuccessful
+
   getGattAvailable() {
-    // awkward format with the not, but more intuitive
     return !window.thingyController[this.device.device.id].gattBusy;
   }
 
-  postponeOperation(methodName, method) {
-    window.thingyController[this.device.device.id].operationQueue.push({feature: this.type, methodName, method});
+  postponeOperation(method, func) {
+    console.log(`postponing operation ${method} on the ${this.type} feature`);
+    window.thingyController[this.device.device.id].operationQueue.push({feature: this.type, method, func});
   }
 
   processError(error) {
