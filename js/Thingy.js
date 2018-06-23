@@ -143,7 +143,7 @@ class Thingy extends EventTarget {
     this.gas = new GasSensor(this);
     this.gravityvector = new GravityVectorSensor(this);
     this.humidity = new HumiditySensor(this);
-    this.step = new StepCounterSensor(this);
+    this.stepcounter = new StepCounterSensor(this);
     this.rawdata = new RawDataSensor(this);
     this.eulerorientation = new EulerOrientationSensor(this);
     this.rotationmatrixorientation = new RotationMatrixOrientationSensor(this);
@@ -241,144 +241,36 @@ class Thingy extends EventTarget {
   async executePostponedOperations() {
     try {
       window.thingyController[this.device.id].executingPostponedOperations = true;
+      let numAttempts;
+      let operation;
 
-      loop1:
       while (window.thingyController[this.device.id].operationQueue.length > 0) {
-        const operation = window.thingyController[this.device.id].operationQueue.shift();
+        operation = window.thingyController[this.device.id].operationQueue.shift();
+        numAttempts = 0;
         window.thingyController[this.device.id].numOperationsExecuted = 0;
 
         // don't differentiate between the types of operations performed and the reasons for their potential failure
-        loop2:
-        for (let i=0;i<3;i++) {
-          setTimeout(async () => {
-            const successful = await operation.func();
-
-            // suggests that the operation either completed or that it was requeued
-            if (successful === true) {
-              break;
-            }
-
-            // on last iteration, if the number of operations executed while we tried to perform the current one
-            // is less than or equal to the number of times we performed the current one, something must be wrong
-            // with the current one.
-            if (i === 2 && window.thingyController[this.device.id].numOperationsExecuted < 3) {
-              // cancel operation and continue
-            }
-          }, 100);
-        }
-        counter = 0;
-
-        while (counter < 3) {
-          counter++;
+        const interval = setInterval(() => {
           const successful = await operation.func();
+          numAttempts++;
 
+          // suggests that the operation either completed or that it was requeued
           if (successful === true) {
-            numSuccessfulOperations++;
+            clearInterval(interval);
           }
 
-
-        }
-
-        if (successful === true) {
-          numSuccessfulOperations++;
-        } else if
-
-        if (numTotalOperationsExecutedSinceLastIteration === 0 && !successful) {
-          
-        }
-
-
-
-
-
-
-          let readded = false;
-          let i = 0;
-
-          while (i<window.thingyController[this.device.id].newlyOperations.length;
-          window.thingyController[this.device.id].triedOperations.push(operation);
-        }
-
-
-
+          // on every other attempt, if the number of operations executed while we tried to perform the current one
+          // is less than or equal to the number of times we performed the current one, something must be wrong
+          // with the execution of the current one and the operation is discarded
+          if (numAttempts%2 === 0 && (window.thingyController[this.device.id].numOperationsExecuted - numAttempts) == 0) {
+            // discard operation and continue
+          }
+        }, 100);
+      }   
         
-        window.thingyController[this.device.id].executingPostponedOperations = false;
-      } catch (error) {
-
-      }
-
-    }
-
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  async executePostponedOperations(round, triedOperations = {}) {
-    
-      if (round < 3) {
-        window.thingyController[this.device.id].executingPostponedOperations = true;
-        let retries = 0;
-
-        while (window.thingyController[this.device.id].operationQueue.length > 0) {
-          if (retries === 3) {
-            window.thingyController[this.device.id].executingPostponedOperations = false;
-            this.executePostponedOperations(round+1, triedOperations);
-            return;
-          } else {
-            if (!window.thingyController[this.device.id].gattBusy) {
-              retries = 0;
-              const operation = window.thingyController[this.device.id].operationQueue.shift();
-
-              if (!(operation.feature in triedOperations)) {
-                triedOperations[operation.feature] = {};
-              }
-
-              if (!(operation.method in triedOperations)) {
-                triedOperations[operation.feature][triedOperations[operation.method]] = 1;
-              }
-
-              if (triedOperations[operation.feature][triedOperations[operation.method]] < 4) {
-                await operation.func();
-              } else {
-                // we have tried to perform a previously failed operation three more times.
-                // Since it could not be completed, an event is dispatched under 'operationcancelled'
-                this.dispatchOperationCancelledEvent(operation.feature, operation.method, operation.func);
-              }
-            } else {
-              await setTimeout(() => {
-                retries++;
-              }, 500 * Math.pow(2, round));
-            }
-          }
-        }
-      } else {
-        // Something seems to obstruct 
-      }
- 
       window.thingyController[this.device.id].executingPostponedOperations = false;
+    } catch (error) {
+
     }
   }
 
