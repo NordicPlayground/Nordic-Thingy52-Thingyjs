@@ -39,7 +39,7 @@ class FeatureOperations extends EventTarget {
     this.latestReading = new Map(); 
   }
 
-  async _connect(postponed = false) {
+  async _connect() {
     if (("connected" in this.characteristic) && this.characteristic.connected) {
       console.log(`You're already connected to the ${this.type} feature`);
       return true;
@@ -71,19 +71,22 @@ class FeatureOperations extends EventTarget {
           // only used by the microphone per now
         }
 
-        console.log(`Connected to the ${this.type} feature`);
+        if (this.device.logEnabled) {
+          console.log(`Connected to the ${this.type} feature`);
+        }
+        
         return true;
       } catch (error) {
         this.setGattAvailable();
 
         this.characteristic.connected = false;
-        this.postponeOperation("connect", this._connect.bind(this, true));
+        this.queueOperation("connect", this._connect.bind(this));
 
         this.processError(error);
         return false;
       }
     } else {
-      this.postponeOperation("connect", this._connect.bind(this, true));
+      this.queueOperation("connect", this._connect.bind(this));
       return false;
     }
   }
@@ -138,8 +141,7 @@ class FeatureOperations extends EventTarget {
           }
         } else {
           if (retries === 3) {
-            this.device.dispatchOperationCancelledEvent(this.type, "read");
-            // se på senere
+            this.device.dispatchOperationDiscardedEvent({feature: this.type, method: "read"});
             return false;
           } else {
             await setTimeout(async () => {
@@ -194,18 +196,9 @@ class FeatureOperations extends EventTarget {
         if (this.getGattAvailable()) {
           try {
             this.setGattBusy();
-            const encodedValue = await this.characteristic.encoder(prop);
+            await this.characteristic.characteristic.writeValue(this.characteristic.encoder(prop));
 
-            // TODO husk å sjekke denne
-            await this.characteristic.characteristic.writeValue(encodedValue)
-            .then(feedback => {
-              console.log(feedback);
-            });
-
-
-            
             this.setGattAvailable();
-
             return true;
           } catch (error) {
             this.setGattAvailable();
@@ -214,7 +207,7 @@ class FeatureOperations extends EventTarget {
           }
         } else {
           if (retries === 3) {
-            this.device.dispatchOperationCancelledEvent(this.type, "write");
+            this.device.dispatchOperationDiscardedEvent({feature: this.type, method: "write"});
             return false;
           } else {
             await setTimeout(async () => {
@@ -232,7 +225,7 @@ class FeatureOperations extends EventTarget {
     }
   }
 
-  async _notify(enable, verify = false, postponed = false) {
+  async _notify(enable, verify = false) {
     if (!(enable === true || enable === false)) {
       const e = new Error("You have to specify the enable parameter (true/false)");
       this.processError(e);
@@ -243,7 +236,7 @@ class FeatureOperations extends EventTarget {
       const connected = await this._connect();
 
       if (!connected) {
-        this.postponeOperation("notify", this._notify.bind(this, enable, verify, true));
+        this.queueOperation("notify", this._notify.bind(this, enable, verify));
         return false;
       }
     }
@@ -305,12 +298,16 @@ class FeatureOperations extends EventTarget {
           csn.addEventListener("characteristicvaluechanged", onReading.bind(this));
           
           this.characteristic.notifying = true;
-          console.log(`Notifications enabled for the ${this.type} feature`);
+
+          if (this.device.logEnabled) {
+            console.log(`Notifications enabled for the ${this.type} feature`);
+          }
+          
           return true;
         } catch (error) {
           this.setGattAvailable();
           this.characteristic.notifying = false;
-          this.postponeOperation("notify", this._notify.bind(this, enable, verify, true));
+          this.queueOperation("notify", this._notify.bind(this, enable, verify));
           this.processError(error);
           return false;
         }
@@ -322,18 +319,22 @@ class FeatureOperations extends EventTarget {
           csn.removeEventListener("characteristicvaluechanged", onReading.bind(this));
 
           this.characteristic.notifying = false;
-          console.log(`Notifications disabled for the ${this.type} feature`);
+          
+          if (this.device.logEnabled) {
+            console.log(`Notifications disabled for the ${this.type} feature`);
+          }
+
           return true;
         } catch (error) {
           this.setGattAvailable();
           this.characteristic.notifying = true;
-          this.postponeOperation("notify", this._notify.bind(this, enable, verify, true));
+          this.queueOperation("notify", this._notify.bind(this, enable, verify));
           this.processError(error);
           return false;
         }
       }
     } else {
-      this.postponeOperation("notify", this._notify.bind(this, enable, verify, true));
+      this.queueOperation("notify", this._notify.bind(this, enable, verify));
       return false;
     }
   }
@@ -343,11 +344,11 @@ class FeatureOperations extends EventTarget {
   }
 
   async start() {
-      return await this._notify(true);
+      this.queueOperation("notify", this._notify.bind(this, true));
   }
 
   async stop() {
-    return await this._notify(false);
+    this.queueOperation("notify", this._notify.bind(this, false));
   }
 
   async read() {
@@ -358,7 +359,6 @@ class FeatureOperations extends EventTarget {
     return await this._write(data);
   }
 
-  
   setGattBusy() {
     window.thingyController[this.device.device.id].gattBusy = true;
   }
@@ -369,17 +369,13 @@ class FeatureOperations extends EventTarget {
     this.device.dispatchEvent(new Event("gattavailable"));
   }
 
-  dispatchPostponedOperationSuccessful() {
-    this.device.dispatchEvent("postponedoperationsuccessful");
-  }
-
   getGattAvailable() {
     return !window.thingyController[this.device.device.id].gattBusy;
   }
 
-  postponeOperation(method, func) {
-    console.log(`postponing operation ${method} on the ${this.type} feature`);
-    window.thingyController[this.device.device.id].operationQueue.push({feature: this.type, method, func});
+  queueOperation(method, f) {
+    window.thingyController[this.device.device.id].operationQueue.push({feature: this.type, method, f});
+    this.device.dispatchEvent(new Event("operationqueued"));
   }
 
   processError(error) {
