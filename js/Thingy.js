@@ -227,7 +227,7 @@ class Thingy extends EventTarget {
 
   // used to execute queued operations.
   // as long as this method perceives operations to be executed (without regard to the operation's outcome) it will run.
-  // if an operation fails three times and 
+  // if an operation fails three times and seemingly no other operations are executed at the same time, the operation is discarded.
   async executeQueuedOperations() {
     try {
       window.thingyController[this.device.id].executingQueuedOperations = true;
@@ -249,7 +249,7 @@ class Thingy extends EventTarget {
 
         if (!(operation.method in triedOperations[operation.feature])) {
           triedOperations[operation.feature][operation.method] = 0;
-        }
+        } 
 
         triedOperations[operation.feature][operation.method]++;
         
