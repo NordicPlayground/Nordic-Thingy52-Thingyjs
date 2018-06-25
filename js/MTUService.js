@@ -40,12 +40,10 @@ class MTUService extends FeatureOperations {
       uuid: this.device.TCS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TCS_MTU_REQUEST_UUID,
-        decoder: this.decodeMtu.bind(this),
-        encoder: this.encodeMtu.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TCS_MTU_REQUEST_UUID,
+      decoder: this.decodeMtu.bind(this),
+      encoder: this.encodeMtu.bind(this),
     };
   }
 

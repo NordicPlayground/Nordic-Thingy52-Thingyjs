@@ -40,12 +40,10 @@ class EddystoneUrlService extends FeatureOperations {
       uuid: this.device.TCS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TCS_EDDYSTONE_UUID,
-        decoder: this.decodeEddystoneData.bind(this),
-        encoder: this.encodeEddystoneData.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TCS_EDDYSTONE_UUID,
+      decoder: this.decodeEddystoneData.bind(this),
+      encoder: this.encodeEddystoneData.bind(this),
     };
   }
 

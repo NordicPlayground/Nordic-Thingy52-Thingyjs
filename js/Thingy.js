@@ -64,11 +64,11 @@ class Thingy extends EventTarget {
   constructor(options = {logEnabled: true}) {
     super();
 
+    this.logEnabled = options.logEnabled;
+
     if (this.logEnabled) {
       console.log("I am alive!");
     }
-
-    this.logEnabled = options.logEnabled;
 
     // TCS = Thingy Configuration Service
     this.TCS_UUID = "ef680100-9b35-4933-9b10-52ffa9740042";
@@ -124,13 +124,9 @@ class Thingy extends EventTarget {
       this.TSS_UUID,
     ];
 
-    if (!window.busyGatt) {
-      window.busyGatt = false;
-    }
-
-    this.receiveReading = this.receiveReading.bind(this);
-
-    this.addEventListener("characteristicvaluechanged", this.receiveReading);
+    this.addEventListener("characteristicvaluechanged", this.receiveReading.bind(this));
+    this.addEventListener("gattavailable", this.handleGattAvailable.bind(this));
+    this.addEventListener("operationqueued", this.handleQueue.bind(this));
 
     this.advertisingparameters = new AdvertisingParametersService(this);
     this.microphone = new MicrophoneSensor(this);
@@ -151,7 +147,7 @@ class Thingy extends EventTarget {
     this.gas = new GasSensor(this);
     this.gravityvector = new GravityVectorSensor(this);
     this.humidity = new HumiditySensor(this);
-    this.step = new StepCounterSensor(this);
+    this.stepcounter = new StepCounterSensor(this);
     this.rawdata = new RawDataSensor(this);
     this.eulerorientation = new EulerOrientationSensor(this);
     this.rotationmatrixorientation = new RotationMatrixOrientationSensor(this);
@@ -184,6 +180,26 @@ class Thingy extends EventTarget {
       // Connect to GATT server
       this.server = await this.device.gatt.connect();
 
+      if (window.thingyController === undefined) {
+        window.thingyController = {};
+      }
+
+      if (window.thingyController[this.device.id] === undefined) {
+        window.thingyController[this.device.id] = {};
+      }
+
+      if (window.thingyController[this.device.id].gattBusy === undefined) {
+        window.thingyController[this.device.id].gattBusy = false;
+      }
+
+      if (window.thingyController[this.device.id].operationQueue === undefined) {
+        window.thingyController[this.device.id].operationQueue = [];
+      }
+
+      if (window.thingyController[this.device.id].executingQueuedOperations === undefined) {
+        window.thingyController[this.device.id].executingQueuedOperations = false;
+      }
+
       if (this.logEnabled) {
         console.log(`Connected to "${this.device.name}"`);
       }
@@ -201,9 +217,95 @@ class Thingy extends EventTarget {
     this.dispatchEvent(featureSpecificEvent);
   }
 
+  // used to make sure that operations are executed, without regard to the operation's outcome
+  handleGattAvailable() {
+    // considering changing this to an array of the actual operations executed to use in the failcheck in executeQueuedOperations
+    // thus we can keep track of both the number of operations executed and their details
+    window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations++;
+  }
+
+  // every time an operation is queued this method decides whether or not to initiate an executing function
+  handleQueue() {
+    if (!window.thingyController[this.device.id].executingQueuedOperations && window.thingyController[this.device.id].operationQueue.length !== 0) {
+      this.executeQueuedOperations();
+    }
+  }
+
+  // used to execute queued operations.
+  // as long as this method perceives operations to be executed (without regard to the operation's outcome) it will run.
+  // if an operation fails three times and seemingly no other operations are executed at the same time, the operation is discarded.
+  async executeQueuedOperations() {
+    try {
+      window.thingyController[this.device.id].executingQueuedOperations = true;
+      window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations = 0;
+      const triedOperations = {};
+      let operation;
+
+      let totalOperationsExecutedUntilLastIteration = 0;
+      let totalOperationsExecutedSinceLastIteration = 0;
+
+      while (window.thingyController[this.device.id].operationQueue.length !== 0) {
+        totalOperationsExecutedSinceLastIteration = window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations - totalOperationsExecutedUntilLastIteration;
+        totalOperationsExecutedUntilLastIteration = window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations;
+        operation = window.thingyController[this.device.id].operationQueue.shift();
+        
+        if (!(operation.feature in triedOperations)) {
+          triedOperations[operation.feature] = {};
+        }
+
+        if (!(operation.method in triedOperations[operation.feature])) {
+          triedOperations[operation.feature][operation.method] = 0;
+        } 
+
+        triedOperations[operation.feature][operation.method]++;
+        
+        const successful = await operation.f();
+
+        if (triedOperations[operation.feature][operation.method] >= 3) {
+          if (successful !== true) {
+            if (totalOperationsExecutedSinceLastIteration === 1) {
+              // we have now tried this particular operation three times.
+              // It's still not completing successfully, and no other operations
+              // are going through. We are therefore discarding it.
+
+              // see handleGattAvailable
+
+              for (let i=0;i<window.thingyController[this.device.id].operationQueue.length;i++) {
+                const op = window.thingyController[this.device.id].operationQueue[i];
+
+                if (operation.feature === op.feature && operation.method === op.method) {
+                  window.thingyController[this.device.id].operationQueue.splice(i, 1);
+                  i--;
+                }
+              }
+
+              this.dispatchOperationDiscardedEvent(operation);
+            }
+          }
+        }
+      }   
+
+      window.thingyController[this.device.id].executingQueuedOperations = false;
+    } catch (error) {
+      // some error occurred, do something
+
+      window.thingyController[this.device.id].executingQueuedOperations = false;
+    }
+  }
+
+  dispatchOperationDiscardedEvent(operation) {
+    if (this.logEnabled) {
+      console.log(`The ${operation.method} operation on the ${operation.feature} feature could not be performed at this moment. An event containing the operation's details has been dispatched under the name 'operationdiscarded'`);
+    }
+
+    this.device.dispatchEvent(new CustomEvent("operationdiscarded", {detail: operation}));
+  }
+
   async disconnect() {
     try {
       await this.device.gatt.disconnect();
+
+      window.thingyController[this.device.id] = undefined;
       
       if (this.logEnabled) {
         console.log(`Disconnected from "${this.device.name}"`);

@@ -40,12 +40,10 @@ class LEDService extends FeatureOperations {
       uuid: this.device.TUIS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TUIS_LED_UUID,
-        decoder: this.decodeLedData.bind(this),
-        encoder: this.encodeLedData.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TUIS_LED_UUID,
+      decoder: this.decodeLedData.bind(this),
+      encoder: this.encodeLedData.bind(this),
     };
   }
 

@@ -40,12 +40,10 @@ class CloudTokenService extends FeatureOperations {
       uuid: this.device.TCS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TCS_CLOUD_TOKEN_UUID,
-        decoder: this.decodeCloudToken.bind(this),
-        encoder: this.encodeCloudToken.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TCS_CLOUD_TOKEN_UUID,
+      decoder: this.decodeCloudToken.bind(this),
+      encoder: this.encodeCloudToken.bind(this),
     };
   }
 
