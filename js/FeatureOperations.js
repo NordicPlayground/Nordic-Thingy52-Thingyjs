@@ -77,11 +77,10 @@ class FeatureOperations extends EventTarget {
         
         return true;
       } catch (error) {
+        this.queueOperation("connect", this._connect.bind(this));
         this.setGattAvailable();
 
         this.characteristic.connected = false;
-        this.queueOperation("connect", this._connect.bind(this));
-
         this.processError(error);
         return false;
       }
@@ -273,9 +272,9 @@ class FeatureOperations extends EventTarget {
       return;
     }
 
-    const onReading = (e) => {
+    const onReading = async (e) => {
       try {
-        const decodedData = this.characteristic.decoder(e.target.value);
+        const decodedData = await this.characteristic.decoder(e.target.value);
         let ce;
 
         if (verify) {
@@ -318,9 +317,10 @@ class FeatureOperations extends EventTarget {
           
           return true;
         } catch (error) {
-          this.setGattAvailable();
-          this.characteristic.notifying = false;
           this.queueOperation("notify", this._notify.bind(this, enable, verify));
+          this.setGattAvailable();
+
+          this.characteristic.notifying = false;
           this.processError(error);
           return false;
         }
@@ -339,9 +339,10 @@ class FeatureOperations extends EventTarget {
 
           return true;
         } catch (error) {
-          this.setGattAvailable();
-          this.characteristic.notifying = true;
           this.queueOperation("notify", this._notify.bind(this, enable, verify));
+          this.setGattAvailable();
+
+          this.characteristic.notifying = true;
           this.processError(error);
           return false;
         }
@@ -357,11 +358,11 @@ class FeatureOperations extends EventTarget {
   }
 
   async start() {
-      this.queueOperation("notify", this._notify.bind(this, true));
+    return await this._notify(true);
   }
 
   async stop() {
-    this.queueOperation("notify", this._notify.bind(this, false));
+    return await this._notify(false);
   }
 
   async read() {
