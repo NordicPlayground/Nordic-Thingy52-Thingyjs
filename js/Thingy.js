@@ -127,6 +127,7 @@ class Thingy extends EventTarget {
 
     this.addEventListener("characteristicvaluechanged", this.receiveReading.bind(this));
     this.addEventListener("gattavailable", this.handleGattAvailable.bind(this));
+    this.addEventListener("operationqueued", this.handleQueue.bind(this));
 
     this.advertisingparameters = new AdvertisingParametersService(this);
     this.microphone = new MicrophoneSensor(this);
@@ -225,8 +226,11 @@ class Thingy extends EventTarget {
     // considering changing this to an array of the actual operations executed to use in the failcheck in executeQueuedOperations
     // thus we can keep track of both the number of operations executed and their details
     window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations++;
+  }
 
-    if (!window.thingyController[this.device.id].executingQueuedOperations && window.thingyController[this.device.id].operationQueue.length !== 0 && !window.thingyController[this.device.id].gattBusy) {
+  // every time an operation is queued this method decides whether or not to initiate an executing function
+  handleQueue() {
+    if (!window.thingyController[this.device.id].executingQueuedOperations && window.thingyController[this.device.id].operationQueue.length !== 0) {
       this.executeQueuedOperations();
     }
   }

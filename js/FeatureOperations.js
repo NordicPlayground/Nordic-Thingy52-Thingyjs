@@ -77,9 +77,8 @@ class FeatureOperations extends EventTarget {
         
         return true;
       } catch (error) {
-        this.queueOperation("connect", this._connect.bind(this));
         this.setGattAvailable();
-
+        this.queueOperation("connect", this._connect.bind(this));
         this.characteristic.connected = false;
         this.processError(error);
         return false;
@@ -317,9 +316,8 @@ class FeatureOperations extends EventTarget {
           
           return true;
         } catch (error) {
-          this.queueOperation("notify", this._notify.bind(this, enable, verify));
           this.setGattAvailable();
-
+          this.queueOperation("notify", this._notify.bind(this, enable, verify));
           this.characteristic.notifying = false;
           this.processError(error);
           return false;
@@ -339,9 +337,8 @@ class FeatureOperations extends EventTarget {
 
           return true;
         } catch (error) {
-          this.queueOperation("notify", this._notify.bind(this, enable, verify));
           this.setGattAvailable();
-
+          this.queueOperation("notify", this._notify.bind(this, enable, verify));
           this.characteristic.notifying = true;
           this.processError(error);
           return false;
@@ -358,11 +355,19 @@ class FeatureOperations extends EventTarget {
   }
 
   async start() {
-    return await this._notify(true);
+    const success = await this._notify(true);
+
+    if (success === false) {
+      this.device.dispatchEvent(new Event("operationqueued"));
+    }
   }
 
   async stop() {
-    return await this._notify(false);
+    const success = await this._notify(false);
+
+    if (success === false) {
+      this.device.dispatchEvent(new Event("operationqueued"));
+    }
   }
 
   async read() {
