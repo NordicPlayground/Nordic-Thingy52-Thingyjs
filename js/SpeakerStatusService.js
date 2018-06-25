@@ -31,37 +31,36 @@
 
 import FeatureOperations from "./FeatureOperations.js";
 
-class FirmwareService extends FeatureOperations {
+class SpeakerStatusService extends FeatureOperations {
   constructor(device) {
-    super(device, "firmware");
+    super(device, "speakerstatus");
 
-    // gatt service and characteristic used to communicate with Thingy's firmware version configuration
+    // gatt service and characteristic used to communicate with Thingy's speaker status
     this.service = {
-      uuid: this.device.TCS_UUID,
+      uuid: this.device.TSS_UUID,
     };
 
-    this.characteristic = {
-      uuid: this.device.TCS_FW_VER_UUID,
-      decoder: this.decodeFirmwareVersion.bind(this),
+    this.characteristics = {
+      default: {
+        uuid: this.device.TSS_SPEAKER_STAT_UUID,
+        decoder: this.decodeSpeakerStatus.bind(this),
+      },
     };
   }
 
-  decodeFirmwareVersion(data) {
+  decodeSpeakerStatus(data) {
     try {
-      const major = data.getUint8(0);
-      const minor = data.getUint8(1);
-      const patch = data.getUint8(2);
-      const version = `v${major}.${minor}.${patch}`;
+      const speakerStatus = data.getInt8(0);
 
-      const decodedVersion = {
-        firmware: version,
+      const decodedSpeakerStatus = {
+        status: speakerStatus,
       };
 
-      return decodedVersion;
+      return decodedSpeakerStatus;
     } catch (error) {
       throw error;
     }
   }
 }
 
-export default FirmwareService;
+export default SpeakerStatusService;

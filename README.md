@@ -200,8 +200,8 @@ Allows interaction with the connected device's advertising parameters
 -   `write` - Writes the advertising parameters of the connected device.
     - **Parameters**:
         - Object:
-            - interval (Advertising interval, unit 0.625ms). Integer in the range 32 to 8000 (20ms to 5s)
-            - timeout (Advertising timeout, unit 1ms). Integer in the range 0 to 180 (0s to 3min)
+            - interval (Advertising interval). Integer in the range 20 to 5000 (20ms to 5s)
+            - timeout (Advertising timeout). Integer in the range 0 to 180 (0s to 3min)
 
 ### Button
 `thingy.button`
@@ -250,10 +250,10 @@ Allows interaction with the connected device's connection parameters
 -   `write` - Writes the connection parameters of the connected device.
     - **Parameters**:
         - Object:
-            - minInterval (Minimum connection interval, unit 1.25ms). Integer in the range 6 to 3200 (7.5ms to 4s)
-            - maxInterval (Maximum connection interval (unit 1.25ms). Integer in the range 6 to 3200 (7.5ms to 4s)
+            - minInterval (Minimum connection interval). Number in the range 7.5 to 4000 (7.5ms to 4s)
+            - maxInterval (Maximum connection interval). Number in the range 7.5 to 4000 (7.5ms to 4s)
             - slaveLatency (Slave latency - number of connection events). Integer in the range 0 to 499
-            - supervisionTimeout (Supervision timeout, unit 10ms). Integer in the range 10 to 3200 (100ms to 32s)
+            - timeout (Supervision timeout). Integer in the range 100 to 32000 (100ms to 32s)
 
 ### DFU
 `thingy.dfu`

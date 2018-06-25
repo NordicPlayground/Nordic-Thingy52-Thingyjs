@@ -31,50 +31,80 @@
 
 import FeatureOperations from "./FeatureOperations.js";
 
-class NameService extends FeatureOperations {
+class SoundConfigurationService extends FeatureOperations {
   constructor(device) {
-    super(device, "name");
+    super(device, "soundconfiguration");
 
-    // gatt service and characteristic used to communicate with Thingy's name configuration
+    // gatt service and characteristic used to communicate with Thingy's sound service
     this.service = {
-      uuid: this.device.TCS_UUID,
+      uuid: this.device.TSS_UUID,
     };
 
-    this.characteristic = {
-      uuid: this.device.TCS_NAME_UUID,
-      decoder: this.decodeName.bind(this),
-      encoder: this.encodeName.bind(this),
+    this.characteristics = {
+      default: {
+        uuid: this.device.TSS_CONFIG_UUID,
+        decoder: this.decodeSoundConfigurationData.bind(this),
+        encoder: this.encodeSoundConfigurationData.bind(this),
+      },
     };
   }
 
-  decodeName(data) {
+  decodeSoundConfigurationData(data) {
     try {
-      const decoder = new TextDecoder("utf-8");
-      const name = decoder.decode(data);
-      const decodedName = {
-        name: name,
+      const speakerMode = data.getUint8(0);
+      const microphoneMode = data.getUint8(1);
+      const decodedSoundConfiguration = {
+        speakerMode: speakerMode,
+        microphoneMode: microphoneMode,
       };
-      return decodedName;
+      return decodedSoundConfiguration;
     } catch (error) {
       throw error;
     }
   }
 
-  encodeName(data) {
+  async encodeSoundConfigurationData(data) {
     try {
-      if (data.length > 10) {
-        return Promise.reject(new TypeError("The name can't be more than 10 characters long."));
+      if (typeof data !== "object") {
+        return Promise.reject(new TypeError("The argument has to be an object."));
       }
-      const encodedName = new Uint8Array(data.length);
 
-      for (let i = 0; i < data.length; i += 1) {
-        encodedName[i] = data.charCodeAt(i);
+      if ((data.speakerMode === undefined) && (data.microphoneMode === undefined)) {
+        return Promise.reject(new TypeError("The argument has to be an object with at least one of the properties speakerMode and microphoneMode."));
       }
-      return encodedName;
+
+      let speakerMode = data.speakerMode;
+      let microphoneMode = data.microphoneMode;
+
+      if (speakerMode !== undefined) {
+        if (!(speakerMode === 1 || speakerMode === 2 || speakerMode === 3)) {
+          return Promise.reject(new RangeError("The speaker mode must be one of the integers 1, 2 or 3."));
+        }
+      }
+
+      if (microphoneMode !== undefined) {
+        if (!(microphoneMode === 1 || microphoneMode === 2)) {
+          return Promise.reject(new RangeError("The microphone mode must be one of the integers 1 or 2."));
+        }
+      }
+
+      const receivedData = await this._read("default", true);
+      speakerMode = speakerMode || receivedData.getUint8(0);
+      microphoneMode = microphoneMode || receivedData.getUint8(1);
+
+      const dataArray = new Uint8Array(2);
+      for (let i = 0; i < dataArray.length; i++) {
+        dataArray[i] = receivedData.getUint8(i);
+      }
+
+      dataArray[0] = speakerMode & 0xff;
+      dataArray[1] = microphoneMode & 0xff;
+
+      return dataArray;
     } catch (error) {
       throw error;
     }
   }
 }
 
-export default NameService;
+export default SoundConfigurationService;

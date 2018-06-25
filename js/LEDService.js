@@ -55,7 +55,9 @@ class LEDService extends FeatureOperations {
 
       switch (mode) {
       case 0:
-        status = {LEDstatus: {mode: mode}};
+        status = {
+          mode: mode,
+        };
         break;
       case 1:
         status = {

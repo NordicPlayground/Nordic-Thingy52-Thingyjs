@@ -178,8 +178,8 @@ class FeatureOperations extends EventTarget {
         }
       }
 
-      if (!this.hasProperty("write")) {
-        const e = new Error(`The ${this.type} feature does not support the write method`);
+      if (!this.hasProperty("write") && !this.hasProperty("writeWithoutResponse")) {
+        const e = new Error(`The ${this.type} feature does not support the write or writeWithoutResponse method`);
         this.processError(e);
         return false;
       }
