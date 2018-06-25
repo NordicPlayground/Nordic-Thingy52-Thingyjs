@@ -115,25 +115,38 @@ class FeatureOperations extends EventTarget {
         return false;
       }
 
+      if (this.getGattAvailable()) {
+        try {
+          this.setGattBusy();
+          let prop = await this.characteristic.characteristic.readValue();
+          this.setGattAvailable();
+
+          if (returnRaw !== true) {
+            prop = await this.characteristic.decoder(prop);
+          }
+
+          return prop;
+        } catch (error) {
+          console.log(error);
+        }
+      } else {
+        return;
+      }
+
       let retries = 0;
 
       const f = async () => {
         if (this.getGattAvailable()) {
           try {
             this.setGattBusy();
+            let prop = await this.characteristic.characteristic.readValue();
+            this.setGattAvailable();
 
-            if (returnRaw === true) {
-              const rawProp = await this.characteristic.characteristic.readValue();
-              
-              this.setGattAvailable();
-
-              return rawProp;
-            } else {
-              const prop = await this.characteristic.characteristic.readValue();
-              this.setGattAvailable();
-
-              return this.characteristic.decoder(prop);
+            if (returnRaw !== true) {
+              prop = await this.characteristic.decoder(prop);
             }
+  
+            return prop;
           } catch (error) {
             this.setGattAvailable();
             this.processError(error);
@@ -195,9 +208,9 @@ class FeatureOperations extends EventTarget {
       const f = async () => {
         if (this.getGattAvailable()) {
           try {
+            const encodedProp = await this.characteristic.encoder(prop);
             this.setGattBusy();
-            await this.characteristic.characteristic.writeValue(this.characteristic.encoder(prop));
-
+            await this.characteristic.characteristic.writeValue(encodedProp);
             this.setGattAvailable();
             return true;
           } catch (error) {

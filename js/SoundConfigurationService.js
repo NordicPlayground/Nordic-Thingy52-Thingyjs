@@ -40,12 +40,10 @@ class SoundConfigurationService extends FeatureOperations {
       uuid: this.device.TSS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TSS_CONFIG_UUID,
-        decoder: this.decodeSoundConfigurationData.bind(this),
-        encoder: this.encodeSoundConfigurationData.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TSS_CONFIG_UUID,
+      decoder: this.decodeSoundConfigurationData.bind(this),
+      encoder: this.encodeSoundConfigurationData.bind(this),
     };
   }
 
@@ -88,7 +86,7 @@ class SoundConfigurationService extends FeatureOperations {
         }
       }
 
-      const receivedData = await this._read("default", true);
+      const receivedData = await this._read(true);
       speakerMode = speakerMode || receivedData.getUint8(0);
       microphoneMode = microphoneMode || receivedData.getUint8(1);
 

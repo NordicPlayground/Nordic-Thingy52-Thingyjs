@@ -40,11 +40,9 @@ class SpeakerStatusService extends FeatureOperations {
       uuid: this.device.TSS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TSS_SPEAKER_STAT_UUID,
-        decoder: this.decodeSpeakerStatus.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TSS_SPEAKER_STAT_UUID,
+      decoder: this.decodeSpeakerStatus.bind(this),
     };
   }
 
