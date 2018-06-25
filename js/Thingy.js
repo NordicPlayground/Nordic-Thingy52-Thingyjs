@@ -65,6 +65,7 @@ class Thingy extends EventTarget {
     super();
 
     this.logEnabled = options.logEnabled;
+    this.connected = false;
 
     if (this.logEnabled) {
       console.log("I am alive!");
@@ -173,6 +174,8 @@ class Thingy extends EventTarget {
         optionalServices: this.serviceUUIDs,
       });
 
+      this.connected = true;
+
       if (this.logEnabled) {
         console.log(`Found Thingy named "${this.device.name}", trying to connect`);
       }
@@ -204,6 +207,7 @@ class Thingy extends EventTarget {
         console.log(`Connected to "${this.device.name}"`);
       }
     } catch (error) {
+      this.connected = false;
       const e = new Error(error);
       throw e;
     }
@@ -245,6 +249,10 @@ class Thingy extends EventTarget {
       let totalOperationsExecutedSinceLastIteration = 0;
 
       while (window.thingyController[this.device.id].operationQueue.length !== 0) {
+        if (!this.connected) {
+          break;
+        }
+
         totalOperationsExecutedSinceLastIteration = window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations - totalOperationsExecutedUntilLastIteration;
         totalOperationsExecutedUntilLastIteration = window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations;
         operation = window.thingyController[this.device.id].operationQueue.shift();
@@ -303,14 +311,15 @@ class Thingy extends EventTarget {
 
   async disconnect() {
     try {
+      this.connected = false;
       await this.device.gatt.disconnect();
-
       window.thingyController[this.device.id] = undefined;
       
       if (this.logEnabled) {
         console.log(`Disconnected from "${this.device.name}"`);
       }
     } catch (error) {
+      this.connected = true;
       const e = new Error(error);
       throw e;
     }
