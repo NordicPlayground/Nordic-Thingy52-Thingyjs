@@ -36,7 +36,7 @@ class FeatureOperations extends EventTarget {
     super();
     this.device = device;
     this.type = type || this.constructor.name;
-    this.latestReading = new Map(); 
+    this.latestReading = new Map();
   }
 
   async _connect() {
@@ -56,8 +56,7 @@ class FeatureOperations extends EventTarget {
         this.characteristic.connected = true;
         this.characteristic.notifying = false;
 
-        
-  
+
         if (this.characteristic.verifyAction && this.characteristic.verifyReaction) {
           await this.characteristic.verifyAction();
 
@@ -74,7 +73,7 @@ class FeatureOperations extends EventTarget {
         if (this.device.logEnabled) {
           console.log(`Connected to the ${this.type} feature`);
         }
-        
+
         return true;
       } catch (error) {
         this.setGattAvailable();
@@ -90,7 +89,7 @@ class FeatureOperations extends EventTarget {
   }
 
   async _wait(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async _read(returnRaw = false) {
@@ -215,6 +214,13 @@ class FeatureOperations extends EventTarget {
           this.setGattBusy();
           await this.characteristic.characteristic.writeValue(encodedProp);
           this.setGattAvailable();
+
+          // emit event for successful write
+          const ce = new CustomEvent("write", {detail: {
+            feature: this.type,
+            value: prop,
+          }});
+          this.device.dispatchEvent(ce);
           returnValue = true;
         } else {
           await this._wait(200);
@@ -253,7 +259,7 @@ class FeatureOperations extends EventTarget {
 
     if (enable === this.characteristic.notifying) {
       console.log(`The ${this.type} feature has already ${(this.characteristic.notifying ? "enabled" : "disabled")} notifications`);
-      // could also just return, but technically the operation 
+      // could also just return, but technically the operation
       // completed successfully as the desired outcome was achieved
       return true;
     }
@@ -275,7 +281,7 @@ class FeatureOperations extends EventTarget {
         } else {
           this.latestReading.clear();
 
-          for (let elem in decodedData) {
+          for (const elem in decodedData) {
             this.latestReading.set(elem, decodedData[elem]);
           }
 
@@ -287,7 +293,7 @@ class FeatureOperations extends EventTarget {
         }
       } catch (error) {
         // have to find a way to remove event listeners from characteristics
-      } 
+      }
     };
 
     const characteristic = this.characteristic.characteristic;
@@ -300,13 +306,13 @@ class FeatureOperations extends EventTarget {
           this.setGattAvailable();
 
           csn.addEventListener("characteristicvaluechanged", onReading.bind(this));
-          
+
           this.characteristic.notifying = true;
 
           if (this.device.logEnabled) {
             console.log(`Notifications enabled for the ${this.type} feature`);
           }
-          
+
           return true;
         } catch (error) {
           this.setGattAvailable();
@@ -323,7 +329,7 @@ class FeatureOperations extends EventTarget {
           csn.removeEventListener("characteristicvaluechanged", onReading.bind(this));
 
           this.characteristic.notifying = false;
-          
+
           if (this.device.logEnabled) {
             console.log(`Notifications disabled for the ${this.type} feature`);
           }
@@ -387,7 +393,7 @@ class FeatureOperations extends EventTarget {
 
     const ce = new CustomEvent("error", {detail: {
       feature: this.type,
-      error
+      error,
     }});
 
     this.device.dispatchEvent(ce);
