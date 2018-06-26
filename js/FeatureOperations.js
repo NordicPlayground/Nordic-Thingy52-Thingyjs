@@ -89,18 +89,33 @@ class FeatureOperations extends EventTarget {
     }
   }
 
+  async _wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   async _read(returnRaw = false) {
     try {
-      if (!this.characteristic.connected) {
-        const connected = await this._connect();
+      let connectIteration = 0;
+      let readIteration = 0;
+      let returnValue = false;
 
-        if (!connected) {
+      if (!this.characteristic.connected) {
+        await this._connect();
+      }
+
+      while (!this.characteristic.connected) {
+        connectIteration++;
+
+        if (connectIteration === 50) {
           const e = new Error(`As we couldn't connect to the ${this.type} feature, the read operation can't be executed`);
           this.processError(e);
           return false;
         }
+
+        // waiting for the connect operation to go through
+        await this._wait(200);
       }
-    
+
       if (!this.hasProperty("read")) {
         const e = new Error(`The ${this.type} feature does not support the read method`);
         this.processError(e);
@@ -108,13 +123,21 @@ class FeatureOperations extends EventTarget {
       }
 
       if (!this.characteristic.decoder) {
-        const e = new Error("The characteristic you're trying to write does not have a specified decoder");
+        const e = new Error("The characteristic you're trying to read does not have a specified decoder");
         this.processError(e);
         return false;
       }
 
-      if (this.getGattAvailable()) {
-        try {
+      while (returnValue === false) {
+        readIteration++;
+
+        if (readIteration === 50) {
+          const e = new Error("We could not process your read request at the moment due to high operational traffic");
+          this.processError(e);
+          return false;
+        }
+
+        if (this.getGattAvailable()) {
           this.setGattBusy();
           let prop = await this.characteristic.characteristic.readValue();
           this.setGattAvailable();
@@ -123,49 +146,15 @@ class FeatureOperations extends EventTarget {
             prop = await this.characteristic.decoder(prop);
           }
 
-          return prop;
-        } catch (error) {
-          console.log(error);
-        }
-      } else {
-        return;
-      }
-
-      let retries = 0;
-
-      const f = async () => {
-        if (this.getGattAvailable()) {
-          try {
-            this.setGattBusy();
-            let prop = await this.characteristic.characteristic.readValue();
-            this.setGattAvailable();
-
-            if (returnRaw !== true) {
-              prop = await this.characteristic.decoder(prop);
-            }
-  
-            return prop;
-          } catch (error) {
-            this.setGattAvailable();
-            this.processError(error);
-            return false;
-          }
+          returnValue = prop;
         } else {
-          if (retries === 3) {
-            this.device.dispatchOperationDiscardedEvent({feature: this.type, method: "read"});
-            return false;
-          } else {
-            await setTimeout(async () => {
-              retries++;
-    
-              return await f();
-            }, 500);
-          }
+          await this._wait(200);
         }
       }
 
-      return await f();
+      return returnValue;
     } catch (error) {
+      this.setGattAvailable();
       this.processError(error);
       return false;
     }
@@ -179,14 +168,25 @@ class FeatureOperations extends EventTarget {
         return false;
       }
 
-      if (!this.characteristic.connected) {
-        const connected = await this._connect();
+      let connectIteration = 0;
+      let writeIteration = 0;
+      let returnValue = false;
 
-        if (!connected) {
-          const e = new Error(`As we couldn't connect to the ${this.type} feature, the write operation can't be executed`);
+      if (!this.characteristic.connected) {
+        await this._connect();
+      }
+
+      while (!this.characteristic.connected) {
+        connectIteration++;
+
+        if (connectIteration === 50) {
+          const e = new Error(`As we couldn't connect to the ${this.type} feature, the read operation can't be executed`);
           this.processError(e);
           return false;
         }
+
+        // waiting for the connect operation to go through
+        await this._wait(200);
       }
 
       if (!this.hasProperty("write") && !this.hasProperty("writeWithoutResponse")) {
@@ -201,36 +201,29 @@ class FeatureOperations extends EventTarget {
         return false;
       }
 
-      let retries = 0;
+      while (returnValue === false) {
+        writeIteration++;
 
-      const f = async () => {
+        if (writeIteration === 50) {
+          const e = new Error("We could not process your read request at the moment due to high operational traffic");
+          this.processError(e);
+          return false;
+        }
+
         if (this.getGattAvailable()) {
-          try {
-            const encodedProp = await this.characteristic.encoder(prop);
-            this.setGattBusy();
-            await this.characteristic.characteristic.writeValue(encodedProp);
-            this.setGattAvailable();
-            return true;
-          } catch (error) {
-            this.setGattAvailable();
-            this.processError(error);
-            return false;
-          }
+          const encodedProp = await this.characteristic.encoder(prop);
+          this.setGattBusy();
+          await this.characteristic.characteristic.writeValue(encodedProp);
+          this.setGattAvailable();
+          returnValue = true;
         } else {
-          if (retries === 3) {
-            this.device.dispatchOperationDiscardedEvent({feature: this.type, method: "write"});
-            return false;
-          } else {
-            await setTimeout(async () => {
-              retries++;
-              return await f();
-            }, 500);
-          }
+          await this._wait(200);
         }
       }
 
-      return await f();
+      return returnValue;
     } catch (error) {
+      this.setGattAvailable();
       this.processError(error);
       return false;
     }
@@ -355,19 +348,11 @@ class FeatureOperations extends EventTarget {
   }
 
   async start() {
-    const success = await this._notify(true);
-
-    if (success === false) {
-      this.device.dispatchEvent(new Event("operationqueued"));
-    }
+    return await this._notify(true);
   }
 
   async stop() {
-    const success = await this._notify(false);
-
-    if (success === false) {
-      this.device.dispatchEvent(new Event("operationqueued"));
-    }
+    return await this._notify(false);
   }
 
   async read() {
