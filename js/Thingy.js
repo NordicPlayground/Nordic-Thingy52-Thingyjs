@@ -224,7 +224,6 @@ class Thingy extends EventTarget {
   handleGattAvailable() {
     // considering changing this to an array of the actual operations executed to use in the failcheck in executeQueuedOperations
     // thus we can keep track of both the number of operations executed and their details
-    console.log(" ----------- gatt available ----------- ");
     window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations++;
 
     if (!window.thingyController[this.device.id].executingQueuedOperations && window.thingyController[this.device.id].operationQueue.length !== 0 && !window.thingyController[this.device.id].gattBusy) {
