@@ -339,6 +339,10 @@ class FeatureOperations extends EventTarget {
             console.log(`Notifications disabled for the ${this.type} feature`);
           }
 
+          if (this.audioCtx) {
+            this.suspendAudioContext();
+          }
+
           return true;
         } catch (error) {
           this.setGattAvailable();
