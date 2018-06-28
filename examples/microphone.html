@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Thingy:52 Web Bluetooth</title>
+  </head>
+  <body>
+    <button id="connectBtn">Connect</button>
+    <div id="microphone"></div>
+    <script type="module">
+      
+      import Thingy from "./index.js";
+      const thingy = new Thingy({logEnabled: true});
+      async function start(device) {
+        try {
+          await device.connect();
+          await device.mtu.write(276);
+          const myLogger = (data) => {
+            const tempData = data.detail;
+            device.microphone.play(tempData);
+          };
+          await device.addEventListener("microphone", myLogger);
+          await device.microphone.start();
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      
+      document.querySelector("#connectBtn").addEventListener("click", async () => {
+        start(thingy);
+      });
+    </script>
+  </body>
+</html>

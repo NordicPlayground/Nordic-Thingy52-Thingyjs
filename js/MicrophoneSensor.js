@@ -43,8 +43,8 @@ class Microphone extends FeatureOperations {
     this.characteristic = {
       uuid: this.device.TSS_MIC_UUID,
       decoder: this.decodeMicrophoneData.bind(this),
-      verifyAction: this.verifyMicrophoneAction.bind(this),
-      verifyReaction: this.verifyMicrophoneReaction.bind(this),
+      // verifyAction: this.verifyMicrophoneAction.bind(this),
+      // verifyReaction: this.verifyMicrophoneReaction.bind(this),
     };
 
     const AudioContext = window.AudioContext || window.webkitAudioContext;
