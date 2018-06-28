@@ -251,65 +251,71 @@ class Thingy extends EventTarget {
   // as long as this method perceives operations to be executed (without regard to the operation's outcome) it will run.
   // if an operation fails three times and seemingly no other operations are executed at the same time, the operation is discarded.
   async executeQueuedOperations() {
-    if (this.connected) {
-      try {
-        window.thingyController[this.device.id].executingQueuedOperations = true;
-        window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations = 0;
-        const triedOperations = {};
-        let operation;
-  
-        let totalOperationsExecutedUntilLastIteration = 0;
-        let totalOperationsExecutedSinceLastIteration = 0;
-  
-        while (window.thingyController[this.device.id].operationQueue.length !== 0) {
-          if (!this.connected) {
-            return;
-          }
-  
-          totalOperationsExecutedSinceLastIteration = window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations - totalOperationsExecutedUntilLastIteration;
-          totalOperationsExecutedUntilLastIteration = window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations;
-          operation = window.thingyController[this.device.id].operationQueue.shift();
-          
-          if (!(operation.feature in triedOperations)) {
-            triedOperations[operation.feature] = {};
-          }
-  
-          if (!(operation.method in triedOperations[operation.feature])) {
-            triedOperations[operation.feature][operation.method] = 0;
-          } 
-  
-          triedOperations[operation.feature][operation.method]++;
-          
-          const successful = await operation.f();
-  
-          if (triedOperations[operation.feature][operation.method] >= 3) {
-            if (successful !== true) {
-              if (totalOperationsExecutedSinceLastIteration === 1) {
-                // we have now tried this particular operation three times.
-                // It's still not completing successfully, and no other operations
-                // are going through. We are therefore discarding it.
-  
-                // see handleGattAvailable
-  
-                for (let i=0;i<window.thingyController[this.device.id].operationQueue.length;i++) {
-                  const op = window.thingyController[this.device.id].operationQueue[i];
-  
-                  if (operation.feature === op.feature && operation.method === op.method) {
-                    window.thingyController[this.device.id].operationQueue.splice(i, 1);
-                    i--;
-                  }
+    try {
+      if (!this.connected) {
+        return;
+      }
+
+      window.thingyController[this.device.id].executingQueuedOperations = true;
+      window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations = 0;
+      const triedOperations = {};
+      let operation;
+
+      let totalOperationsExecutedUntilLastIteration = 0;
+      let totalOperationsExecutedSinceLastIteration = 0;
+
+      while (window.thingyController[this.device.id].operationQueue.length !== 0) {
+        if (!this.connected) {
+          return;
+        }
+
+        totalOperationsExecutedSinceLastIteration = window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations - totalOperationsExecutedUntilLastIteration;
+        totalOperationsExecutedUntilLastIteration = window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations;
+        operation = window.thingyController[this.device.id].operationQueue.shift();
+        
+        if (!(operation.feature in triedOperations)) {
+          triedOperations[operation.feature] = {};
+        }
+
+        if (!(operation.method in triedOperations[operation.feature])) {
+          triedOperations[operation.feature][operation.method] = 0;
+        } 
+
+        triedOperations[operation.feature][operation.method]++;
+        
+        const successful = await operation.f();
+
+        if (triedOperations[operation.feature][operation.method] >= 3) {
+          if (successful !== true) {
+            if (totalOperationsExecutedSinceLastIteration === 1) {
+              // we have now tried this particular operation three times.
+              // It's still not completing successfully, and no other operations
+              // are going through. We are therefore discarding it.
+
+              // see handleGattAvailable
+
+              for (let i=0;i<window.thingyController[this.device.id].operationQueue.length;i++) {
+                const op = window.thingyController[this.device.id].operationQueue[i];
+
+                if (operation.feature === op.feature && operation.method === op.method) {
+                  window.thingyController[this.device.id].operationQueue.splice(i, 1);
+                  i--;
                 }
-  
-                this.dispatchOperationDiscardedEvent(operation);
               }
+
+              this.dispatchOperationDiscardedEvent(operation);
             }
           }
-        }   
-  
+        }
+      }
+
+      if (this.connected) {
         window.thingyController[this.device.id].executingQueuedOperations = false;
-      } catch (error) {
-        // some error occurred, do something
-  
+      }
+    } catch (error) {
+      // some error occurred, do something
+
+      if (this.connected) {
         window.thingyController[this.device.id].executingQueuedOperations = false;
       }
     }
@@ -317,7 +323,9 @@ class Thingy extends EventTarget {
 
   handleGattServerNotConnected({detail}) {
     if (detail.error.message === "Invalid state: GATT server not connected") {
-      this.device.disconnect();
+      if (this.connected) {
+        this.disconnect();
+      }
     }
   }
 
