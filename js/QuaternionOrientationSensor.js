@@ -33,7 +33,7 @@ import FeatureOperations from "./FeatureOperations.js";
 
 class QuaternionOrientationSensor extends FeatureOperations {
   constructor(device) {
-    super(device, "quaternion");
+    super(device, "quaternionorientation");
 
     // gatt service and characteristic used to communicate with Thingy's quaternion sensor
     this.service = {
