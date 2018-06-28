@@ -50,13 +50,17 @@ class FeatureOperations extends EventTarget {
         this.setGattBusy();
 
         this.service.service = await this.device.server.getPrimaryService(this.service.uuid);
-
         this.characteristic.characteristic = await this.service.service.getCharacteristic(this.characteristic.uuid);
+
         this.setGattAvailable();
+
         this.characteristic.connected = true;
         this.characteristic.notifying = false;
+        this.characteristic.hasEventListener = false;
 
-
+        /*
+        // This approach needs to be fundamentally revised
+        // For now we'll leave it here, commented out
         if (this.characteristic.verifyAction && this.characteristic.verifyReaction) {
           await this.characteristic.verifyAction();
 
@@ -68,7 +72,7 @@ class FeatureOperations extends EventTarget {
           // by the functions over. Could prove difficult, will have to see if
           // I can alter how verifyAction & verifyReaction works, as it's
           // only used by the microphone per now
-        }
+        }*/
 
         if (this.device.logEnabled) {
           console.log(`Connected to the ${this.type} feature`);
@@ -304,8 +308,11 @@ class FeatureOperations extends EventTarget {
         try {
           const csn = await characteristic.startNotifications();
           this.setGattAvailable();
-
-          csn.addEventListener("characteristicvaluechanged", onReading.bind(this));
+          
+          if (!this.characteristic.hasEventListener) {
+            csn.addEventListener("characteristicvaluechanged", onReading.bind(this));
+            this.characteristic.hasEventListener = true;
+          }
 
           this.characteristic.notifying = true;
 
@@ -325,8 +332,6 @@ class FeatureOperations extends EventTarget {
         try {
           const csn = await characteristic.stopNotifications();
           this.setGattAvailable();
-
-          csn.removeEventListener("characteristicvaluechanged", onReading.bind(this));
 
           this.characteristic.notifying = false;
 
