@@ -59,6 +59,7 @@ import MotionConfigurationService from "./MotionConfigurationService.js";
 import SoundConfigurationService from "./SoundConfigurationService.js";
 import SpeakerDataService from "./SpeakerDataService.js";
 import SpeakerStatusService from "./SpeakerStatusService.js";
+import BatteryService from "./BatteryService.js";
 
 class Thingy extends EventTarget {
   constructor(options = {logEnabled: true}) {
@@ -157,6 +158,7 @@ class Thingy extends EventTarget {
     this.soundconfiguration = new SoundConfigurationService(this);
     this.speakerdata = new SpeakerDataService(this);
     this.speakerstatus = new SpeakerStatusService(this);
+    this.battery = new BatteryService(this);
   }
 
   async connect() {
