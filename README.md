@@ -107,6 +107,7 @@ Thingy offers several features, all of which rely on established BLE protocols f
 | :----: | :----: | :----: | :----: |
 | Absolute orientation | Yes | No | No |
 | Advertising parameters | No  | Yes | Yes |
+| Battery | Yes | Yes | No |
 | Button | Yes | No | No |
 | Cloud token | No | Yes | Yes |
 | Color | Yes | No | No |
@@ -121,15 +122,17 @@ Thingy offers several features, all of which rely on established BLE protocols f
 | Heading | Yes | No | No |
 | Humidity | Yes | No | No |
 | LED | No | Yes | Yes |
-| Microphone (in development) | Yes | No | No |
+| Microphone | Yes | No | No |
 | Motion configuration | No | Yes | Yes |
-| MTU (in development) | - | - | - |
+| MTU | No | Yes | Yes |
 | Name | No | Yes | Yes |
 | Pressure | Yes | No | No |
 | Quaternion orientation | Yes | No | No |
 | Raw data | Yes | No | No |
 | Rotation matrix orientation | Yes | No | No |
-| Speaker (in development) | - | - | - |
+| Sound configuration | No | Yes | Yes |
+| Speaker Data | No | No | Yes |
+| Speaker Status | Yes | No | No |
 | Step counter | Yes | No | No |
 | Tap | Yes | No | No |
 | Temperature | Yes | No | No |
@@ -141,32 +144,35 @@ Thingy offers several features, all of which rely on established BLE protocols f
 Below you can find extended information on each feature Thingy supports, as well as information about the parameters required to interact with them.
 
 -   [Thingy](#thingy)
-    -   [Absolute orientation](#absolute-orientation)
-    -   [Advertising parameters](#advertising-parameters)
+    -   [Absolute Orientation](#absolute-orientation)
+    -   [Advertising Parameters](#advertising-parameters)
+    -   [Battery](#battery)
     -   [Button](#button)
-    -   [Cloud token](#cloud-token)
+    -   [Cloud Token](#cloud-token)
     -   [Color](#color)
-    -   [Connection parameters](#connection-parameters)
+    -   [Connection Parameters](#connection-parameters)
     -   [DFU](#dfu)
     -   [Eddystone url](#eddystone-url)
-    -   [Environment configuration](#environment-configuration)
-    -   [Euler orientation](#euler-orientation)
+    -   [Environment Configuration](#environment-configuration)
+    -   [Euler Orientation](#euler-orientation)
     -   [Firmware](#firmware)
     -   [Gas](#gas)
-    -   [Gravity vector](#gravity-vector)
+    -   [Gravity Vector](#gravity-vector)
     -   [Heading](#heading)
     -   [Humidity](#humidity)
     -   [LED](#led)
     -   [Microphone](#microphone)
-    -   [Motion configuration](#motion-configuration)
+    -   [Motion Configuration](#motion-configuration)
     -   [MTU](#mtu)
     -   [Name](#name)
     -   [Pressure](#pressure)
-    -   [Quaternion orientation](#quaternion-orientation)
-    -   [Raw data](#raw-data)
-    -   [Rotation matrix orientation](#rotation-matrix-orientation)
-    -   [Speaker](#speaker)
-    -   [Step counter](#step-counter)
+    -   [Quaternion Orientation](#quaternion-orientation)
+    -   [Raw Data](#raw-data)
+    -   [Rotation Matrix Orientation](#rotation-matrix-orientation)
+    -   [Sound Configuration](#sound-configuration)
+    -   [Speaker Data](#speaker-data)
+    -   [Speaker Status](#speaker-status)
+    -   [Step Counter](#step-counter)
     -   [Tap](#tap)
     -   [Temperature](#temperature)
 
@@ -177,7 +183,7 @@ Below you can find extended information on each feature Thingy supports, as well
 
 -   `options`   (optional, default `{logEnabled:true}`)
 
-### Absolute orientation
+### Absolute Orientation
 `thingy.absoluteorientation`
 
 `event: absoluteorientation`
@@ -189,7 +195,7 @@ Allows interaction with the connected device's absolute orientation sensor
 -   `start` - Starts sending absolute orientation data from the connected device
 -   `stop`  - Terminates sending absolute orientation data from the connected device
 
-### Advertising parameters
+### Advertising Parameters
 `thingy.advertisingparameters`
 
 Allows interaction with the connected device's advertising parameters
@@ -203,6 +209,19 @@ Allows interaction with the connected device's advertising parameters
             - interval (Advertising interval). Integer in the range 20 to 5000 (20ms to 5s)
             - timeout (Advertising timeout). Integer in the range 0 to 180 (0s to 3min)
 
+### Battery
+`thingy.battery`
+
+`event: battery`
+
+Allows interaction with the connected device's battery level
+
+**Supported operations**
+
+-   `start` - Starts sending battery level data from the connected device
+-   `stop`  - Terminates sending battery level data from the connected device
+-   `read`  - Reads the connected device's battery level
+
 ### Button
 `thingy.button`
 
@@ -215,7 +234,7 @@ Allows interaction with the connected device's button
 -   `start` - Starts sending button data from the connected device
 -   `stop`  - Terminates sending button data from the connected device
 
-### Cloud token
+### Cloud Token
 `thingy.cloudtoken`
 
 Allows interaction with the connected device's cloud token service
@@ -239,7 +258,7 @@ Allows interaction with the connected device's color sensor (not LED)
 -   `start` - Starts sending color data from the connected device
 -   `stop`  - Terminates sending color data from the connected device
 
-### Connection parameters
+### Connection Parameters
 `thingy.connectionparameters`
 
 Allows interaction with the connected device's connection parameters
@@ -297,7 +316,7 @@ Allows interaction with the connected device's environment configuration
                 - green - Integer in the range 0 to 255
                 - blue - Integer in the range 0 to 255
 
-### Euler orientation
+### Euler Orientation
 `thingy.eulerorientation`
 
 `event: eulerorientation`
@@ -427,7 +446,10 @@ Allows interaction with the connected device's MTU service (Maximum Transmission
 
 **Supported operations**
 
-In development
+-   `read` - Reads the MTU of the connected device
+-   `write` - Writes the MTU of the connected device.
+    - **Parameters**:
+        - MTU - Integer in the range 23 to 276.
 
 
 ### Name
@@ -490,15 +512,57 @@ Allows interaction with the connected device's rotation matrix orientation senso
 -   `start` - Starts sending rotation matrix orientation data from the connected device
 -   `stop`  - Terminates sending rotation matrix orientation data from the connected device
 
-### Speaker
-`thingy.speaker`
+### Sound Configuration
+`thingy.soundconfiguration`
 
-Allows interaction with the connected device's speaker
+Allows interaction with the connected device's sound configuration
 
 **Supported operations**
 
-In development
+-   `read` - Reads the connected device's current sound configuration
+-   `write` - Writes the sound configuration of the connected device
+    - **Parameters**:
+        - Object:
+            - speakerMode (Sets the speaker mode). Must be one of the integers:
+                - 1 - Frequency mode.
+                - 2 - 8-bit PCM mode (used for streaming audio to Thingy).
+                - 3 - Sample mode.
+            - microphoneMode (Sets the microphone mode). Must be one of the integers:
+                - 1 - ADPCM mode.
+                - 2 - SPL mode.
 
+### Speaker Data
+`thingy.speakerdata`
+
+Allows interaction with the connected device's speaker data. 
+Note that speaker mode has to be set to the desired mode beforehand by writing to [Sound Configuration](#sound-configuration).
+
+**Supported operations**
+
+-   `write` - Writes to the speaker of the connected device
+    - **Parameters**:
+        - Object:
+            - mode - Mode of the speaker. Can be one of the following: 1, 2 or 3.
+            - mode = 1:
+                - frequency - Frequency in Hz. Integer larger than 0.
+                - duration - Duration in ms. Integer larger than 0.
+                - volume - Volume in %. Integer in the range 0 to 100.
+            - mode = 2:
+                - data - 8-bit PCM samples. Audio data of size between 20-273 bytes. See audiostream.html in examples folder for example
+            - mode = 3:
+                - sample - Sample ID. Integer in the range 0 to 8
+
+### Speaker Status
+`thingy.speakerstatus`
+
+`event: speakerstatus`
+
+Allows interaction with the connected device's speaker status
+
+**Supported operations**
+
+-   `start` - Starts sending the speaker status from the connected device
+-   `stop`  - Terminates sending the speaker status from the connected device
 
 ### Step counter
 `thingy.stepcounter`
