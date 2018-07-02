@@ -128,6 +128,7 @@ class Thingy extends EventTarget {
 
     this.addEventListener("characteristicvaluechanged", this.receiveReading.bind(this));
     this.addEventListener("gattavailable", this.handleGattAvailable.bind(this));
+    this.addEventListener("error", this.handleGattServerNotConnected.bind(this));
 
     this.advertisingparameters = new AdvertisingParametersService(this);
     this.microphone = new MicrophoneSensor(this);
@@ -173,16 +174,10 @@ class Thingy extends EventTarget {
           services: [this.TCS_UUID],
         }],
         optionalServices: this.serviceUUIDs,
+      })
+      .catch((error) => {
+        throw(error);
       });
-
-      this.connected = true;
-
-      if (this.logEnabled) {
-        console.log(`Found Thingy named "${this.device.name}", trying to connect`);
-      }
-
-      // Connect to GATT server
-      this.server = await this.device.gatt.connect();
 
       if (window.thingyController === undefined) {
         window.thingyController = {};
@@ -205,9 +200,28 @@ class Thingy extends EventTarget {
       }
 
       if (this.logEnabled) {
+        console.log(`Found Thingy named "${this.device.name}", trying to connect`);
+      }
+
+      if (window.thingyController[this.device.id].gattBusy) {
+        return;
+      } else {
+        window.thingyController[this.device.id].gattBusy = true;
+      }
+
+      // Connect to GATT server
+      this.server = await this.device.gatt.connect();
+
+      window.thingyController[this.device.id].gattBusy = false;
+      this.connected = true;
+      
+      if (this.logEnabled) {
         console.log(`Connected to "${this.device.name}"`);
       }
     } catch (error) {
+      if (window.thingyController && "id" in this.device) {
+        window.thingyController[this.device.id].gattBusy = false;
+      }
       this.connected = false;
       const e = new Error(error);
       throw e;
@@ -226,10 +240,12 @@ class Thingy extends EventTarget {
   handleGattAvailable() {
     // considering changing this to an array of the actual operations executed to use in the failcheck in executeQueuedOperations
     // thus we can keep track of both the number of operations executed and their details
-    window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations++;
+    if (this.connected) {
+      window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations++;
 
-    if (!window.thingyController[this.device.id].executingQueuedOperations && window.thingyController[this.device.id].operationQueue.length !== 0 && !window.thingyController[this.device.id].gattBusy) {
-      this.executeQueuedOperations();
+      if (!window.thingyController[this.device.id].executingQueuedOperations && window.thingyController[this.device.id].operationQueue.length !== 0 && !window.thingyController[this.device.id].gattBusy) {
+        this.executeQueuedOperations();
+      }
     }
   }
 
@@ -238,6 +254,10 @@ class Thingy extends EventTarget {
   // if an operation fails three times and seemingly no other operations are executed at the same time, the operation is discarded.
   async executeQueuedOperations() {
     try {
+      if (!this.connected) {
+        return;
+      }
+
       window.thingyController[this.device.id].executingQueuedOperations = true;
       window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations = 0;
       const triedOperations = {};
@@ -248,7 +268,7 @@ class Thingy extends EventTarget {
 
       while (window.thingyController[this.device.id].operationQueue.length !== 0) {
         if (!this.connected) {
-          break;
+          return;
         }
 
         totalOperationsExecutedSinceLastIteration = window.thingyController[this.device.id].numExecutedOperationsWhileExecutingQueuedOperations - totalOperationsExecutedUntilLastIteration;
@@ -289,13 +309,25 @@ class Thingy extends EventTarget {
             }
           }
         }
-      }   
+      }
 
-      window.thingyController[this.device.id].executingQueuedOperations = false;
+      if (this.connected) {
+        window.thingyController[this.device.id].executingQueuedOperations = false;
+      }
     } catch (error) {
       // some error occurred, do something
 
-      window.thingyController[this.device.id].executingQueuedOperations = false;
+      if (this.connected) {
+        window.thingyController[this.device.id].executingQueuedOperations = false;
+      }
+    }
+  }
+
+  handleGattServerNotConnected({detail}) {
+    if (detail.error.message === "Invalid state: GATT server not connected") {
+      if (this.connected) {
+        this.disconnect();
+      }
     }
   }
 
@@ -308,16 +340,22 @@ class Thingy extends EventTarget {
   }
 
   async disconnect() {
+    // if the operation fails something is wrong with this.device.gatt, and we should signal that the device is disconnected
+    this.connected = false;
+    
+    if (this.device && this.device.id && window.thingyController) {
+      if (this.device.id in window.thingyController) {
+        window.thingyController[this.device.id] = undefined;
+      }
+    }
+
     try {
-      this.connected = false;
       await this.device.gatt.disconnect();
-      window.thingyController[this.device.id] = undefined;
       
       if (this.logEnabled) {
         console.log(`Disconnected from "${this.device.name}"`);
       }
     } catch (error) {
-      this.connected = true;
       const e = new Error(error);
       throw e;
     }

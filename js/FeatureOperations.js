@@ -45,6 +45,12 @@ class FeatureOperations extends EventTarget {
       return true;
     }
 
+    if (!this.device.connected) {
+      const e = new Error(`The device is not currently connected to a central unit`);
+      this.processError(e);
+      return false;
+    }
+
     if (this.getGattAvailable()) {
       try {
         this.setGattBusy();
@@ -140,6 +146,12 @@ class FeatureOperations extends EventTarget {
           return false;
         }
 
+        if (!this.device.connected) {
+          const e = new Error(`The device is not currently connected to a central unit`);
+          this.processError(e);
+          return false;
+        }
+
         if (this.getGattAvailable()) {
           this.setGattBusy();
           let prop = await this.characteristic.characteristic.readValue();
@@ -209,6 +221,12 @@ class FeatureOperations extends EventTarget {
 
         if (writeIteration === 50) {
           const e = new Error("We could not process your read request at the moment due to high operational traffic");
+          this.processError(e);
+          return false;
+        }
+
+        if (!this.device.connected) {
+          const e = new Error(`The device is not currently connected to a central unit`);
           this.processError(e);
           return false;
         }
@@ -300,6 +318,12 @@ class FeatureOperations extends EventTarget {
       }
     };
 
+    if (!this.device.connected) {
+      const e = new Error(`The device is not currently connected to a central unit`);
+      this.processError(e);
+      return;
+    }
+
     const characteristic = this.characteristic.characteristic;
 
     if (this.getGattAvailable()) {
@@ -379,26 +403,42 @@ class FeatureOperations extends EventTarget {
   }
 
   setGattBusy() {
-    window.thingyController[this.device.device.id].gattBusy = true;
+    if (this.device.connected) {
+      window.thingyController[this.device.device.id].gattBusy = true;
+    } else {
+      const e = new Error(`The device is not currently connected to a central unit`);
+      this.processError(e);
+    }
   }
 
   setGattAvailable() {
-    window.thingyController[this.device.device.id].gattBusy = false;
-
-    this.device.dispatchEvent(new Event("gattavailable"));
+    if (this.device.connected) {
+      window.thingyController[this.device.device.id].gattBusy = false;
+      this.device.dispatchEvent(new Event("gattavailable"));
+    } else {
+      const e = new Error(`The device is not currently connected to a central unit`);
+      this.processError(e);
+    }
   }
 
   getGattAvailable() {
-    return !window.thingyController[this.device.device.id].gattBusy;
+    return this.device.connected ? !window.thingyController[this.device.device.id].gattBusy : false;
   }
 
   queueOperation(method, f) {
-    window.thingyController[this.device.device.id].operationQueue.push({feature: this.type, method, f});
-    this.device.dispatchEvent(new Event("operationqueued"));
+    if (this.device.connected) {
+      window.thingyController[this.device.device.id].operationQueue.push({feature: this.type, method, f});
+      this.device.dispatchEvent(new Event("operationqueued"));
+    } else {
+      const e = new Error(`The device is not currently connected to a central unit`);
+      this.processError(e);
+    }
   }
 
   processError(error) {
-    console.error(`The ${this.type} feature has reported an error: ${error}`);
+    if (this.device.logEnabled) {
+      console.error(`The ${this.type} feature has reported an error: ${error}`);
+    }
 
     const ce = new CustomEvent("error", {detail: {
       feature: this.type,
