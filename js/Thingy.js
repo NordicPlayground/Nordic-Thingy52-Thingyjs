@@ -173,7 +173,9 @@ class Thingy extends EventTarget {
           services: [this.TCS_UUID],
         }],
         optionalServices: this.serviceUUIDs,
-      });
+      })
+
+      this.device.addEventListener('gattserverdisconnected', this.onDisconnected.bind(this));
 
       this.connected = true;
 
@@ -304,22 +306,44 @@ class Thingy extends EventTarget {
       console.log(`The ${operation.method} operation on the ${operation.feature} feature could not be performed at this moment. An event containing the operation's details has been dispatched under the name 'operationdiscarded'`);
     }
 
-    this.device.dispatchEvent(new CustomEvent("operationdiscarded", {detail: operation}));
+    this.dispatchEvent(new CustomEvent("operationdiscarded", {detail: operation}));
+  }
+
+  resetDeviceProperties(id) {
+    this.connected = false;
+    window.thingyController[id] = undefined;
+  }
+
+  processError(type, message) {
+    const ce = new CustomEvent(type, {detail: {
+      feature: "thingy",
+      message,
+    }});
+
+    this.device.dispatchEvent(ce);
+  }
+
+  proce
+
+  onDisconnected({target}) {
+    this.resetDeviceProperties(target.id);
+    
+    if (!this.connected) {
+      if (this.logEnabled) {
+        console.log(`Disconnected from device named ${target.name}`);
+      }
+    } else {
+      const e = new Error(`The connection to the device named ${target.name} was lost.`);
+      this.processEvent("error", e);
+    }
+
   }
 
   async disconnect() {
     try {
-      this.connected = false;
       await this.device.gatt.disconnect();
-      window.thingyController[this.device.id] = undefined;
-      
-      if (this.logEnabled) {
-        console.log(`Disconnected from "${this.device.name}"`);
-      }
-    } catch (error) {
-      this.connected = true;
-      const e = new Error(error);
-      throw e;
+    } catch (e) {
+      this.processEvent("error", e);
     }
   }
 }
