@@ -108,21 +108,20 @@ class ThingyController {
 
   // removes either by index or by operation specifics (feature and method)
   removeQueuedOperation(x) {
-    if (Number.isInteger(x)) {
-      if (this.device.getConnected()) {
+    if (this.device.getConnected()) {
+      if (Number.isInteger(x)) {
         window.thingyController[this.tid].queuedOperations.splice(x, 1);
-      }
-    } else {
-      for (let i=0;i<this.getNumQueuedOperations();i++) {
-        const op = this.getQueuedOperation(i);
-    
-        if (x.feature === op.feature && x.method === op.method) {
-          this.removeQueuedOperation(i);
-          i--;
+      } else {
+        for (let i=0;i<this.getNumQueuedOperations();i++) {
+          const op = this.getQueuedOperation(i);
+      
+          if (x.feature === op.feature && x.method === op.method) {
+            this.removeQueuedOperation(i);
+            i--;
+          }
         }
       }
     }
-    
   }
 
   enqueue(feature, method, f) {

@@ -78,6 +78,7 @@ class Microphone extends FeatureOperations {
     }
   }
 
+<<<<<<< HEAD
   // have to override the generic method in FeatureOperations to add feature specific code
   _notify = async (enable, verify = false) => {
     if (enable === false) {
@@ -90,6 +91,9 @@ class Microphone extends FeatureOperations {
   }
 
   verifyMicrophoneReaction = async (data) => {
+=======
+  async verifyMicrophoneReaction(data) {
+>>>>>>> operationQueue
     if (this.getGattAvailable()) {
       try {
         const microphoneData = data.detail.data;

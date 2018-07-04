@@ -295,13 +295,12 @@ class FeatureOperations {
     const onReading = async (e) => {
       try {
         const data = await this.characteristic.decoder(e.target.value);
-        let ce;
 
         if (verify) {
           /*ce = new CustomEvent("verifyReaction", {detail: {feature: this.type, data: decodedData}});
           this.dispatchEvent(ce);*/
         } else {
-          this.utilities.processEvent(this.type, this.type, data)
+          this.utilities.processEvent(this.type, this.type, data);
         }
       } catch (error) {
         this.utilities.processEvent("error", this.type, error);
@@ -331,7 +330,7 @@ class FeatureOperations {
           return true;
         } catch (error) {
           this.thingyController.setGattStatus(true);
-          this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), this._notify.bind(this, enable, verify));
+          this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), (enable, verify) => this._notify(enable, verify));
           this.characteristic.notifying = false;
           this.utilities.processEvent("error", this.type, error);
           return false;
@@ -342,6 +341,13 @@ class FeatureOperations {
           this.thingyController.setGattStatus(true);
 
           this.characteristic.notifying = false;
+
+          // not ideal
+          if (this.type === "microhpone") {
+            if (this.audioCtx) {
+              this.suspendAudioContext();
+            }
+          }
 
           if (this.device.logEnabled) {
             console.log(`Notifications disabled for the ${this.type} feature`);
