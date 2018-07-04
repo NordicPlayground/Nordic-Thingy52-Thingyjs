@@ -86,7 +86,7 @@ class EnvironmentConfigurationService extends FeatureOperations {
     }
   }
 
-  async encodeConfigData(params) {
+  encodeConfigData = async (params) => {
     try {
       if (typeof params !== "object") {
         return Promise.reject(new TypeError("The argument has to be an object."));
