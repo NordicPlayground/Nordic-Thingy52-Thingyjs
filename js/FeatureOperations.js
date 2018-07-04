@@ -342,6 +342,13 @@ class FeatureOperations {
 
           this.characteristic.notifying = false;
 
+          // not ideal
+          if (this.type === "microhpone") {
+            if (this.audioCtx) {
+              this.suspendAudioContext();
+            }
+          }
+
           if (this.device.logEnabled) {
             console.log(`Notifications disabled for the ${this.type} feature`);
           }
