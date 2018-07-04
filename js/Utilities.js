@@ -15,12 +15,8 @@ class Utilities extends EventTarget {
 
       switch(true) {
         case (type === feature || type === "operationdiscarded"):
-          eventObject = {
-            ...body,
-          }
-
+          eventObject = body;
           break;
-
         default: {
           eventObject = {
             feature,
