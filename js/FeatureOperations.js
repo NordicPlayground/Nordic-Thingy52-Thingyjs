@@ -29,7 +29,6 @@
   OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import EventTarget from "./EventTarget.js";
 import ThingyController from "./ThingyController.js";
 import Utilities from "./Utilities.js";
 
@@ -41,7 +40,7 @@ class FeatureOperations {
     this.latestReading = new Map();
   }
 
-  async _connect() {
+  _connect = async () => {
     if (!("thingyController" in this)) {
       // has to be put here rather than in the constructor as we need access to the id of the device
       // which is not accessible before the device has performed its connect method
@@ -92,7 +91,7 @@ class FeatureOperations {
       } catch (error) {
         if ("thingyController" in this) {
           this.thingyController.setGattStatus(true);
-          this.thingyController.enqueue(this.type, "connect", this._connect.bind(this));
+          this.thingyController.enqueue(this.type, "connect", () => this._connect());
         }
         
         this.characteristic.connected = false;
@@ -104,12 +103,12 @@ class FeatureOperations {
         return false;
       }
     } else {
-      this.thingyController.enqueue(this.type, "connect", this._connect.bind(this));
+      this.thingyController.enqueue(this.type, "connect", () => this._connect());
       return false;
     }
   }
 
-  async _read(returnRaw = false) {
+  _read = async (returnRaw = false) => {
     try {
       let connectIteration = 0;
       let readIteration = 0;
@@ -179,7 +178,7 @@ class FeatureOperations {
     }
   }
 
-  async _write(prop) {
+  _write = async (prop) => {
     try {
       if (prop === undefined) {
         const error = new Error("You have to write a non-empty body");
@@ -255,7 +254,7 @@ class FeatureOperations {
     }
   }
 
-  async _notify(enable, verify = false) {
+  _notify = async (enable, verify = false) => {
     if (!(enable === true || enable === false)) {
       const error = new Error("You have to specify the enable parameter (true/false)");
       this.utilities.processEvent("error", this.type, error);
@@ -266,7 +265,7 @@ class FeatureOperations {
       const connected = await this._connect();
 
       if (!connected) {
-        this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), this._notify.bind(this, enable, verify));
+        this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), (enable, verify) => this._notify(enable, verify));
         return false;
       }
     }
@@ -317,7 +316,7 @@ class FeatureOperations {
           this.thingyController.setGattStatus(true);
           
           if (!this.characteristic.hasEventListener) {
-            csn.addEventListener("characteristicvaluechanged", onReading.bind(this));
+            csn.addEventListener("characteristicvaluechanged", (e) => onReading(e));
             this.characteristic.hasEventListener = true;
           }
 
@@ -356,35 +355,35 @@ class FeatureOperations {
           return true;
         } catch (error) {
           this.thingyController.setGattStatus(true);
-          this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), this._notify.bind(this, enable, verify));
+          this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), (enable, verify) => this._notify(enable, verify));
           this.characteristic.notifying = true;
           this.utilities.processEvent("error", this.type, error);
           return false;
         }
       }
     } else {
-      this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), this._notify.bind(this, enable, verify));
+      this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), (enable, verify) => this._notify(enable, verify));
       return false;
     }
   }
 
-  hasProperty(property) {
+  hasProperty = (property) => {
     return (this.characteristic.characteristic.properties[property] === true ? true : false);
   }
 
-  async start() {
+  start = async () => {
     return await this._notify(true);
   }
 
-  async stop() {
+  stop = async () => {
     return await this._notify(false);
   }
 
-  async read() {
+  read = async () => {
     return await this._read();
   }
 
-  async write(data) {
+  write = async (data) =>  {
     return await this._write(data);
   }
 }

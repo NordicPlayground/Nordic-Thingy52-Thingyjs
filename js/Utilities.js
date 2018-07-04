@@ -1,3 +1,5 @@
+import EventTarget from "./EventTarget.js";
+
 class Utilities extends EventTarget {
     constructor(device) {
       super();
@@ -6,11 +8,11 @@ class Utilities extends EventTarget {
     }
   
 
-    async wait(ms) {
+    wait = (ms) => {
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    processEvent(type, feature, body, target = this.device) {
+    processEvent = (type, feature, body, target = this.device) => {
       let eventObject;
 
       switch(true) {

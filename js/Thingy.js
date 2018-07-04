@@ -61,11 +61,11 @@ import SpeakerStatusService from "./SpeakerStatusService.js";
 import BatteryService from "./BatteryService.js";
 import ThingyController from "./ThingyController.js";
 import Utilities from "./Utilities.js";
+import EventTarget from "./EventTarget.js";
 
 class Thingy extends EventTarget {
   constructor(options = {logEnabled: true}) {
     super();
-
     this.logEnabled = options.logEnabled;
     this.connected = false;
 
@@ -127,8 +127,8 @@ class Thingy extends EventTarget {
       this.TSS_UUID,
     ];
 
-    this.addEventListener("gattavailable", this.executeQueuedOperations.bind(this));
-    this.addEventListener("operationqueued", this.executeQueuedOperations.bind(this));
+    this.addEventListener("gattavailable", () => this.executeQueuedOperations());
+    this.addEventListener("operationqueued", () => this.executeQueuedOperations());
 
     this.advertisingparameters = new AdvertisingParametersService(this);
     this.microphone = new MicrophoneSensor(this);
@@ -162,7 +162,7 @@ class Thingy extends EventTarget {
     this.battery = new BatteryService(this);
   }
 
-  async connect() {
+  connect = async () => {
     try {
       // Scan for Thingys
       if (this.logEnabled) {
@@ -176,7 +176,7 @@ class Thingy extends EventTarget {
         optionalServices: this.serviceUUIDs,
       })
 
-      this.device.addEventListener('gattserverdisconnected', this.onDisconnected.bind(this));
+      this.device.addEventListener('gattserverdisconnected', (e) => this.onDisconnected(e));
 
       this.setConnected(true);
 
@@ -205,7 +205,7 @@ class Thingy extends EventTarget {
   // used to execute queued operations.
   // as long as this method perceives operations to be executed (without regard to the operation's outcome) it will run.
   // if an operation fails three times and seemingly no other operations are executed at the same time, the operation is discarded.
-  async executeQueuedOperations() {
+  executeQueuedOperations = async () => {
     try {
       if (!this.thingyController.getExecutingQueuedOperations()) {
         if (this.thingyController.getNumQueuedOperations() !== 0) {
@@ -276,35 +276,35 @@ class Thingy extends EventTarget {
     }
   }
 
-  getConnected() {
+  getConnected = () => {
     return this.connected;
   }
 
-  setConnected(bool) {
+  setConnected = (bool) => {
     this.connected = bool;
   }
 
-  resetDeviceProperties(id) {
+  resetDeviceProperties = () => {
     this.setConnected(false);
     this.thingyController.terminate();
   }
 
-  onDisconnected({target}) {
+  onDisconnected = ({target}) => {
     if (!this.getConnected()) {
-      this.resetDeviceProperties(target.id);
+      this.resetDeviceProperties();
 
       if (this.logEnabled) {
         console.log(`Disconnected from device named ${target.name}`);
       }
     } else {
-      this.resetDeviceProperties(target.id);
+      this.resetDeviceProperties();
       const error = new Error(`The connection to the device named ${target.name} was lost.`);
       this.utilities.processEvent("error", "thingy", error);
     }
 
   }
 
-  async disconnect() {
+  disconnect = async () => {
     try {
       await this.device.gatt.disconnect();
     } catch (error) {

@@ -40,7 +40,7 @@ class ThingyController {
     this._initialize();
   }
 
-  _initialize() {
+  _initialize = () => {
     if (window.thingyController === undefined) {
         window.thingyController = {};
       }
@@ -66,17 +66,17 @@ class ThingyController {
       }
   }
 
-  addExecutedOperation(feature, method) {
+  addExecutedOperation = (feature, method) => {
     if (this.device.getConnected()) {
       window.thingyController[this.tid].executedOperations.push({feature, method});
     }
   }
 
-  clearExecutedOperations() {
+  clearExecutedOperations = () => {
     window.thingyController[this.tid].executedOperations = [];
   }
 
-  setGattStatus(bool) {
+  setGattStatus = (bool) => {
     if (this.device.getConnected()) {
       window.thingyController[this.tid].gattStatus = bool;
 
@@ -86,19 +86,19 @@ class ThingyController {
     }
   }
 
-  getGattStatus() {
+  getGattStatus = () => {
     if (this.device.getConnected()) {
       return window.thingyController[this.tid].gattStatus;
     }
   }
 
-  getNumQueuedOperations() {
+  getNumQueuedOperations = () => {
     if (this.device.getConnected()) {
       return window.thingyController[this.tid].queuedOperations.length;
     }
   }
 
-  getQueuedOperation(index) {
+  getQueuedOperation = (index) => {
     if (this.device.getConnected()) {
       if (window.thingyController[this.tid].queuedOperations.length >= index) {
         return window.thingyController[this.tid].queuedOperations[index];
@@ -107,7 +107,7 @@ class ThingyController {
   }
 
   // removes either by index or by operation specifics (feature and method)
-  removeQueuedOperation(x) {
+  removeQueuedOperation = (x) => {
     if (this.device.getConnected()) {
       if (Number.isInteger(x)) {
         window.thingyController[this.tid].queuedOperations.splice(x, 1);
@@ -124,20 +124,20 @@ class ThingyController {
     }
   }
 
-  enqueue(feature, method, f) {
+  enqueue = (feature, method, f) => {
     if (this.device.getConnected()) {
       window.thingyController[this.tid].queuedOperations.push({feature, method, f});
       this.utilities.processEvent("operationqueued");
     }
   }
 
-  dequeue() {
+  dequeue = () => {
     if (this.device.getConnected()) {
       return window.thingyController[this.tid].queuedOperations.shift();
     }
   }
 
-  setExecutingQueuedOperations(bool) {
+  setExecutingQueuedOperations = (bool) => {
     if (this.device.getConnected()) {
       window.thingyController[this.tid].executingQueuedOperations = bool;
 
@@ -147,34 +147,34 @@ class ThingyController {
     }
   }
 
-  getExecutingQueuedOperations() {
+  getExecutingQueuedOperations = () => {
     if (this.device.getConnected()) {
       return window.thingyController[this.tid].executingQueuedOperations;
     }
   }
 
-  getDevice() {
+  getDevice = () => {
     return this.device;
   }
 
-  setDevice(device) {
+  setDevice = (device) => {
     this.device = device;
     this.tid = device.device.id;
   }
 
-  getExecutedOperation(index) {
+  getExecutedOperation = (index) => {
     if (this.device.getConnected()) {
       return window.thingyController[this.tid].executedOperations[index];
     }
   }
 
-  getNumExecutedOperations() {
+  getNumExecutedOperations = () => {
     if (this.device.getConnected()) {
       return window.thingyController[this.tid].executedOperations.length;
     }
   }
 
-  terminate() {
+  terminate = () => {
     window.thingyController[this.tid] = undefined;
   }
 }

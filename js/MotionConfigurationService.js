@@ -70,7 +70,7 @@ class MotionConfigurationService extends FeatureOperations {
     }
   }
 
-  encodeConfigData= (params) => {
+  encodeConfigData = async (params) => {
     try {
       if (typeof params !== "object") {
         return Promise.reject(new TypeError("The argument has to be an object."));
