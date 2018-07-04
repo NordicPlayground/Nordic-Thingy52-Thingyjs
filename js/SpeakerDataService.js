@@ -43,13 +43,13 @@ class SpeakerDataService extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TSS_SPEAKER_DATA_UUID,
-      encoder: this.encodeSpeakerData.bind(this),
+      encoder: this.encodeSpeakerData,
     };
 
     this.soundconfigurationservice = new SoundConfigurationService(this);
   }
 
-  async encodeSpeakerData(data) {
+  encodeSpeakerData = (data) => {
     try {
       if (data.mode === 1) {
         const dataArray = new Uint8Array(5);

@@ -42,11 +42,11 @@ class AbsoluteOrientationSensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TMS_ORIENTATION_UUID,
-      decoder: this.decodeOrientationData.bind(this),
+      decoder: this.decodeOrientationData,
     };
   }
 
-  decodeOrientationData(data) {
+  decodeOrientationData = (data) => {
     try {
       const orientation = data.getUint8(0);
 

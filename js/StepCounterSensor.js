@@ -42,11 +42,11 @@ class StepCounterSensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TMS_STEP_UUID,
-      decoder: this.decodeStepData.bind(this),
+      decoder: this.decodeStepData,
     };
   }
 
-  decodeStepData(data) {
+  decodeStepData = (data) => {
     try {
       const littleEndian = true;
       const count = data.getUint32(0, littleEndian);

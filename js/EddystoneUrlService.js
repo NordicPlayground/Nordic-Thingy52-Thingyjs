@@ -42,12 +42,12 @@ class EddystoneUrlService extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TCS_EDDYSTONE_UUID,
-      decoder: this.decodeEddystoneData.bind(this),
-      encoder: this.encodeEddystoneData.bind(this),
+      decoder: this.decodeEddystoneData,
+      encoder: this.encodeEddystoneData,
     };
   }
 
-  decodeEddystoneData(data) {
+  decodeEddystoneData = (data) => {
     try {
       // According to Eddystone URL encoding specification, certain elements can be expanded: https://github.com/google/eddystone/tree/master/eddystone-url
       const prefixArray = ["http://www.", "https://www.", "http://", "https://"];
@@ -84,7 +84,7 @@ class EddystoneUrlService extends FeatureOperations {
     }
   }
 
-  encodeEddystoneData(data) {
+  encodeEddystoneData = (data) => {
     try {
       // Uses URL API to check for valid URL
       const url = new URL(data);

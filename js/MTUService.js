@@ -42,12 +42,12 @@ class MTUService extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TCS_MTU_REQUEST_UUID,
-      decoder: this.decodeMtu.bind(this),
-      encoder: this.encodeMtu.bind(this),
+      decoder: this.decodeMtu,
+      encoder: this.encodeMtu,
     };
   }
 
-  decodeMtu(mtuSize) {
+  decodeMtu = (mtuSize) => {
     try {
       const littleEndian = true;
       const mtu = mtuSize.getUint16(1, littleEndian);
@@ -58,7 +58,7 @@ class MTUService extends FeatureOperations {
     }
   }
 
-  encodeMtu(mtuSize, peripheralRequest = true) {
+  encodeMtu = (mtuSize, peripheralRequest = true) => {
     try {
       if (mtuSize < 23 || mtuSize > 276) {
         const e = new Error("MTU size must be in range 23 - 276 bytes");

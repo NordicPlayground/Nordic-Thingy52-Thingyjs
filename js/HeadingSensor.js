@@ -42,11 +42,11 @@ class HeadingSensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TMS_HEADING_UUID,
-      decoder: this.decodeHeadingData.bind(this),
+      decoder: this.decodeHeadingData,
     };
   }
 
-  decodeHeadingData(data) {
+  decodeHeadingData = (data) => {
     try {
       const littleEndian = true;
       const heading = data.getInt32(0, littleEndian) / 65536;

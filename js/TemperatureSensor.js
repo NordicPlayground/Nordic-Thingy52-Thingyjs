@@ -42,11 +42,11 @@ class TemperatureSensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TES_TEMP_UUID,
-      decoder: this.decodeTemperature.bind(this),
+      decoder: this.decodeTemperature,
     };
   }
 
-  decodeTemperature(data) {
+  decodeTemperature = (data) => {
     try {
       const integer = data.getInt8(0);
       const decimal = data.getUint8(1);

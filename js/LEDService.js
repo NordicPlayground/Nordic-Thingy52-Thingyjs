@@ -42,12 +42,12 @@ class LEDService extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TUIS_LED_UUID,
-      decoder: this.decodeLedData.bind(this),
-      encoder: this.encodeLedData.bind(this),
+      decoder: this.decodeLedData,
+      encoder: this.encodeLedData,
     };
   }
 
-  decodeLedData(data) {
+  decodeLedData = (data) => {
     try {
       const mode = data.getUint8(0);
       const littleEndian = true;

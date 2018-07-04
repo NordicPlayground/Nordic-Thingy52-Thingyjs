@@ -42,12 +42,12 @@ class NameService extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TCS_NAME_UUID,
-      decoder: this.decodeName.bind(this),
-      encoder: this.encodeName.bind(this),
+      decoder: this.decodeName,
+      encoder: this.encodeName,
     };
   }
 
-  decodeName(data) {
+  decodeName = (data) => {
     try {
       const decoder = new TextDecoder("utf-8");
       const name = decoder.decode(data);
@@ -60,7 +60,7 @@ class NameService extends FeatureOperations {
     }
   }
 
-  encodeName(data) {
+  encodeName = (data) => {
     try {
       if (data.length > 10) {
         return Promise.reject(new TypeError("The name can't be more than 10 characters long."));

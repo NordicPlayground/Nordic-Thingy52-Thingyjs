@@ -42,11 +42,11 @@ class ButtonSensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TUIS_BTN_UUID,
-      decoder: this.decodeButtonData.bind(this),
+      decoder: this.decodeButtonData,
     };
   }
 
-  decodeButtonData(data) {
+  decodeButtonData = (data) => {
     try {
       const state = data.getUint8(0);
       const decodedButton = {

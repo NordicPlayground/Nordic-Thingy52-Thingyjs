@@ -42,11 +42,11 @@ class QuaternionOrientationSensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TMS_QUATERNION_UUID,
-      decoder: this.decodeQuaternionData.bind(this),
+      decoder: this.decodeQuaternionData,
     };
   }
 
-  decodeQuaternionData(data) {
+  decodeQuaternionData = (data) => {
     try {
       const littleEndian = true;
       let w = data.getInt32(0, littleEndian) / (1 << 30);

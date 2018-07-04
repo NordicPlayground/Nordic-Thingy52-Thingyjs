@@ -42,11 +42,11 @@ class EulerOrientationSensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TMS_EULER_UUID,
-      decoder: this.decodeEulerData.bind(this),
+      decoder: this.decodeEulerData,
     };
   }
 
-  decodeEulerData(data) {
+  decodeEulerData = (data) => {
     try {
       const littleEndian = true;
 

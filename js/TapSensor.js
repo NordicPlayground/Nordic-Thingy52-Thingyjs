@@ -42,11 +42,11 @@ class TapSensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TMS_TAP_UUID,
-      decoder: this.decodeTapData.bind(this),
+      decoder: this.decodeTapData,
     };
   }
 
-  decodeTapData(data) {
+  decodeTapData = (data) => {
     try {
       const direction = data.getUint8(0);
       const count = data.getUint8(1);

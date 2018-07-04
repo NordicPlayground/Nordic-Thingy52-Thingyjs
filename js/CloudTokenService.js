@@ -42,12 +42,12 @@ class CloudTokenService extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TCS_CLOUD_TOKEN_UUID,
-      decoder: this.decodeCloudToken.bind(this),
-      encoder: this.encodeCloudToken.bind(this),
+      decoder: this.decodeCloudToken,
+      encoder: this.encodeCloudToken,
     };
   }
 
-  decodeCloudToken(data) {
+  decodeCloudToken = (data) => {
     try {
       const decoder = new TextDecoder("utf-8");
       const token = decoder.decode(data);
@@ -61,7 +61,7 @@ class CloudTokenService extends FeatureOperations {
     }
   }
 
-  encodeCloudToken(token) {
+  encodeCloudToken = (token) => {
     try {
       if (token.length > 250) {
         const error = new Error("The length of the cloud token can not exceed 250 characters.");

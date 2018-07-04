@@ -42,12 +42,12 @@ class ConnectionParametersService extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TCS_CONN_PARAMS_UUID,
-      decoder: this.decodeConnectionParam.bind(this),
-      encoder: this.encodeConnectionParam.bind(this),
+      decoder: this.decodeConnectionParam,
+      encoder: this.encodeConnectionParam,
     };
   }
 
-  decodeConnectionParam(data) {
+  decodeConnectionParam = (data) => {
     try {
       // Connection intervals are given in units of 1.25 ms
       const littleEndian = true;
@@ -69,7 +69,7 @@ class ConnectionParametersService extends FeatureOperations {
     }
   }
 
-  async encodeConnectionParam(params) {
+  encodeConnectionParam = async (params) => {
     try {
       if (typeof params !== "object") {
         const error = new Error("The argument has to be an object.");

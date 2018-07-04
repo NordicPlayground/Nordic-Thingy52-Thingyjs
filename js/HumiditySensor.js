@@ -42,11 +42,11 @@ class HumiditySensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TES_HUMIDITY_UUID,
-      decoder: this.decodeHumidityData.bind(this),
+      decoder: this.decodeHumidityData,
     };
   }
 
-  decodeHumidityData(data) {
+  decodeHumidityData = (data) => {
     try {
       const humidity = data.getUint8(0);
 

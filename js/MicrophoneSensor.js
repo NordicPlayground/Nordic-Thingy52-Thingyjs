@@ -42,9 +42,7 @@ class Microphone extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TSS_MIC_UUID,
-      decoder: this.decodeMicrophoneData.bind(this),
-      // verifyAction: this.verifyMicrophoneAction.bind(this),
-      // verifyReaction: this.verifyMicrophoneReaction.bind(this),
+      decoder: this.decodeMicrophoneData,
     };
 
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -55,14 +53,13 @@ class Microphone extends FeatureOperations {
     this._MICROPHONE_STEP_SIZE_TABLE = [7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209,
       230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658, 724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272, 2499, 2749, 3024, 3327, 3660, 4026, 4428, 4871, 5358,
       5894, 6484, 7132, 7845, 8630, 9493, 10442, 11487, 12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767];
-
-    this.suspendAudioContext = this.suspendAudioContext.bind(this);
   }
 
-  async suspendAudioContext() {
+  suspendAudioContext = async () => {
     await this.audioCtx.suspend();
   }
-  decodeMicrophoneData(event) {
+
+  decodeMicrophoneData = (event) => {
     const audioPacket = event.buffer;
     const adpcm = {
       header: new DataView(audioPacket.slice(0, 3)),
@@ -73,7 +70,7 @@ class Microphone extends FeatureOperations {
     return decodedAudio;
   }
 
-  async verifyMicrophoneAction() {
+  verifyMicrophoneAction = async () => {
     try {
       await this.device.mtu._write(140);
     } catch (error) {
@@ -82,7 +79,7 @@ class Microphone extends FeatureOperations {
   }
 
   // have to override the generic method in FeatureOperations to add feature specific code
-  async _notify(enable, verify = false) {
+  _notify = async (enable, verify = false) => {
     if (enable === false) {
       if (this.audioCtx) {
         this.suspendAudioContext();
@@ -92,7 +89,7 @@ class Microphone extends FeatureOperations {
     await super._notify(enable, verify);
   }
 
-  async verifyMicrophoneReaction(data) {
+  verifyMicrophoneReaction = async (data) => {
     if (this.getGattAvailable()) {
       try {
         const microphoneData = data.detail.data;
@@ -113,7 +110,7 @@ class Microphone extends FeatureOperations {
     }
   }
 
-  _decodeAudio(adpcm) {
+  _decodeAudio = (adpcm) => {
     try {
       // Allocate output buffer
       const audioBufferDataLength = adpcm.data.byteLength;
@@ -192,7 +189,7 @@ class Microphone extends FeatureOperations {
     }
   }
 
-  play(audio) {
+  play = (audio) => {
     if (this._audioStack === undefined) {
       this._audioStack = [];
     }
@@ -201,7 +198,7 @@ class Microphone extends FeatureOperations {
       this._scheduleAudioBuffers();
     }
   }
-  _scheduleAudioBuffers() {
+  _scheduleAudioBuffers = () => {
     while (this._audioStack.length > 0) {
       const bufferTime = 0.01; // Buffer time in seconds before initial audio chunk is played
       const buffer = this._audioStack.shift();

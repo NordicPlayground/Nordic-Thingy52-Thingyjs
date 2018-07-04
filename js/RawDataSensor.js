@@ -42,11 +42,11 @@ class RawDataSensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TMS_RAW_UUID,
-      decoder: this.decodeRawDataData.bind(this),
+      decoder: this.decodeRawDataData,
     };
   }
 
-  decodeRawDataData(data) {
+  decodeRawDataData = (data) => {
     try {
       const littleEndian = true;
       const accX = data.getInt16(0, littleEndian) / 64;

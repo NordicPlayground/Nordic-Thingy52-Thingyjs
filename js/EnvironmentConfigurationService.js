@@ -42,12 +42,12 @@ class EnvironmentConfigurationService extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TES_CONFIG_UUID,
-      decoder: this.decodeConfigData.bind(this),
-      encoder: this.encodeConfigData.bind(this),
+      decoder: this.decodeConfigData,
+      encoder: this.encodeConfigData,
     };
   }
 
-  decodeConfigData(data) {
+  decodeConfigData = (data) => {
     try {
       const littleEndian = true;
       const temperatureInterval = data.getUint16(0, littleEndian);

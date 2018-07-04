@@ -42,11 +42,11 @@ class ColorSensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TES_COLOR_UUID,
-      decoder: this.decodeColorData.bind(this),
+      decoder: this.decodeColorData,
     };
   }
 
-  decodeColorData(data) {
+  decodeColorData = (data) => {
     try {
       const littleEndian = true;
       const r = data.getUint16(0, littleEndian);

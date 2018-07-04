@@ -42,11 +42,11 @@ class GasSensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TES_GAS_UUID,
-      decoder: this.decodeGasData.bind(this),
+      decoder: this.decodeGasData,
     };
   }
 
-  decodeGasData(data) {
+  decodeGasData = (data) => {
     try {
       const littleEndian = true;
       const eco2 = data.getUint16(0, littleEndian);

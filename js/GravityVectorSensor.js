@@ -42,11 +42,11 @@ class GravityVectorSensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TMS_GRAVITY_UUID,
-      decoder: this.decodeGravityVectorData.bind(this),
+      decoder: this.decodeGravityVectorData,
     };
   }
 
-  decodeGravityVectorData(data) {
+  decodeGravityVectorData = (data) => {
     try {
       const x = data.getFloat32(0, true);
       const y = data.getFloat32(4, true);

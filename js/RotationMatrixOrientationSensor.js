@@ -46,7 +46,7 @@ class RotationMatrixOrientationSensor extends FeatureOperations {
     };
   }
 
-  decodeRotationData(data) {
+  decodeRotationData = (data) => {
     try {
       // Divide by 2^2 = 4 to get correct values
       const r1c1 = data.getInt16(0, true) / 4;

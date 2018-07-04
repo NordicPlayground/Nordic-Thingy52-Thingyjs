@@ -42,12 +42,12 @@ class AdvertisingParametersService extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TCS_ADV_PARAMS_UUID,
-      decoder: this.decodeAdvertisingParam.bind(this),
-      encoder: this.encodeAdvertisingParam.bind(this),
+      decoder: this.decodeAdvertisingParam,
+      encoder: this.encodeAdvertisingParam,
     };
   }
 
-  decodeAdvertisingParam(data) {
+  decodeAdvertisingParam = (data) => {
     try {
       // Interval is given in units of 0.625 milliseconds
       const littleEndian = true;
@@ -63,9 +63,8 @@ class AdvertisingParametersService extends FeatureOperations {
     }
   }
 
-  async encodeAdvertisingParam(params) {
+  encodeAdvertisingParam = async (params) => {
     try {
-
       if (typeof params !== "object") {
         const error = new Error("The argument has to be an object.");
         throw error;

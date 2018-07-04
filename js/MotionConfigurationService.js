@@ -42,12 +42,12 @@ class MotionConfigurationService extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TMS_CONFIG_UUID,
-      decoder: this.decodeConfigData.bind(this),
-      encoder: this.encodeConfigData.bind(this),
+      decoder: this.decodeConfigData,
+      encoder: this.encodeConfigData,
     };
   }
 
-  decodeConfigData(data) {
+  decodeConfigData = (data) => {
     try {
       const littleEndian = true;
       const stepCounterInterval = data.getUint16(0, littleEndian);
@@ -70,7 +70,7 @@ class MotionConfigurationService extends FeatureOperations {
     }
   }
 
-  async encodeConfigData(params) {
+  encodeConfigData= (params) => {
     try {
       if (typeof params !== "object") {
         return Promise.reject(new TypeError("The argument has to be an object."));

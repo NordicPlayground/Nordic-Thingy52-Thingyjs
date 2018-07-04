@@ -42,11 +42,11 @@ class BatteryService extends FeatureOperations {
 
     this.characteristic = {
       uuid: "battery_level",
-      decoder: this.decodeBatteryStatus.bind(this),
+      decoder: this.decodeBatteryStatus,
     };
   }
 
-  decodeBatteryStatus(data) {
+  decodeBatteryStatus = (data) => {
     try {
       const batteryStatus = data.getInt8(0);
 

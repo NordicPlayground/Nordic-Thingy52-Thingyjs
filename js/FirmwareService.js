@@ -42,11 +42,11 @@ class FirmwareService extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TCS_FW_VER_UUID,
-      decoder: this.decodeFirmwareVersion.bind(this),
+      decoder: this.decodeFirmwareVersion,
     };
   }
 
-  decodeFirmwareVersion(data) {
+  decodeFirmwareVersion = (data) => {
     try {
       const major = data.getUint8(0);
       const minor = data.getUint8(1);

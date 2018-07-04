@@ -42,12 +42,12 @@ class SoundConfigurationService extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TSS_CONFIG_UUID,
-      decoder: this.decodeSoundConfigurationData.bind(this),
-      encoder: this.encodeSoundConfigurationData.bind(this),
+      decoder: this.decodeSoundConfigurationData,
+      encoder: this.encodeSoundConfigurationData,
     };
   }
 
-  decodeSoundConfigurationData(data) {
+  decodeSoundConfigurationData = (data) => {
     try {
       const speakerMode = data.getUint8(0);
       const microphoneMode = data.getUint8(1);
@@ -61,7 +61,7 @@ class SoundConfigurationService extends FeatureOperations {
     }
   }
 
-  async encodeSoundConfigurationData(data) {
+  encodeSoundConfigurationData = async (data) =>{
     try {
       if (typeof data !== "object") {
         return Promise.reject(new TypeError("The argument has to be an object."));

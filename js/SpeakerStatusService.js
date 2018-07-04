@@ -42,11 +42,11 @@ class SpeakerStatusService extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TSS_SPEAKER_STAT_UUID,
-      decoder: this.decodeSpeakerStatus.bind(this),
+      decoder: this.decodeSpeakerStatus,
     };
   }
 
-  decodeSpeakerStatus(data) {
+  decodeSpeakerStatus = (data) => {
     try {
       const speakerStatus = data.getInt8(0);
 

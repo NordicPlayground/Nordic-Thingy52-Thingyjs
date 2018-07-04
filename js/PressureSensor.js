@@ -42,11 +42,11 @@ class PressureSensor extends FeatureOperations {
 
     this.characteristic = {
       uuid: this.device.TES_PRESSURE_UUID,
-      decoder: this.decodePressureData.bind(this),
+      decoder: this.decodePressureData,
     };
   }
 
-  decodePressureData(data) {
+  decodePressureData = (data) => {
     try {
       const littleEndian = true;
       const integer = data.getUint32(0, littleEndian);
