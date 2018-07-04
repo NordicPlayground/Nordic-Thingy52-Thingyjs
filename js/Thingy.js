@@ -190,6 +190,8 @@ class Thingy extends EventTarget {
       this.thingyController = new ThingyController(this);
       this.utilities = new Utilities(this);
 
+      return true;
+
       if (this.logEnabled) {
         console.log(`Connected to "${this.device.name}"`);
       }
@@ -199,6 +201,8 @@ class Thingy extends EventTarget {
       if ("utilities" in this) {
         this.utilities.processEvent("error", "thingy", error);
       }
+
+      return false;
     }
   }
 

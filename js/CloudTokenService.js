@@ -68,9 +68,10 @@ class CloudTokenService extends FeatureOperations {
         throw error;
       }
 
-      const encoder = new TextEncoder("utf-8").encode(token);
+      const encoder = new TextEncoder("utf-8");
+      const encodedToken = encoder.encode(token);
 
-      return encoder;
+      return encodedToken;
     } catch (error) {
       throw error;
     }

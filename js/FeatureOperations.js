@@ -265,7 +265,7 @@ class FeatureOperations {
       const connected = await this._connect();
 
       if (!connected) {
-        this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), (enable, verify) => this._notify(enable, verify));
+        this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), () => this._notify(enable, verify));
         return false;
       }
     }
@@ -329,7 +329,7 @@ class FeatureOperations {
           return true;
         } catch (error) {
           this.thingyController.setGattStatus(true);
-          this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), (enable, verify) => this._notify(enable, verify));
+          this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), () => this._notify(enable, verify));
           this.characteristic.notifying = false;
           this.utilities.processEvent("error", this.type, error);
           return false;
@@ -355,14 +355,14 @@ class FeatureOperations {
           return true;
         } catch (error) {
           this.thingyController.setGattStatus(true);
-          this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), (enable, verify) => this._notify(enable, verify));
+          this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), () => this._notify(enable, verify));
           this.characteristic.notifying = true;
           this.utilities.processEvent("error", this.type, error);
           return false;
         }
       }
     } else {
-      this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), (enable, verify) => this._notify(enable, verify));
+      this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), () => this._notify(enable, verify));
       return false;
     }
   }
