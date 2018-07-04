@@ -238,6 +238,12 @@ class Thingy extends EventTarget {
               triedOperations[operation.feature][operation.method]++;
               
               const successful = await operation.f();
+
+              // this condition will hopefully never be met
+              if (triedOperations[operation.feature][operation.method] === 10 && successful !== true) {
+                this.thingyController.removeQueuedOperation(operation);
+                this.utilities.processEvent("operationdiscarded", "thingy", operation);
+              }
       
               if (triedOperations[operation.feature][operation.method] >= 3) {
                 if (successful !== true) {
@@ -249,20 +255,11 @@ class Thingy extends EventTarget {
                         continue;
                       }
                     }
-                      
+
                     // we have now tried this particular operation three times.
                     // It's still not completing successfully, and no other operations
                     // are going through. We are therefore discarding it.
-                    for (let i=0;i<this.thingyController.getNumQueuedOperations();i++) {
-                      const op = this.thingyController.getQueuedOperation(i);
-      
-                      if (operation.feature === op.feature && operation.method === op.method) {
-                        this.thingyController.removeQueuedOperation(i);
-                        i--;
-                      }
-                    }
-
-                    // this should be logged by a Logger class as well
+                    this.thingyController.removeQueuedOperation(operation);
                     this.utilities.processEvent("operationdiscarded", "thingy", operation);
                   }
                 }
