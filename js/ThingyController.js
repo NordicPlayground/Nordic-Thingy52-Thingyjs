@@ -29,16 +29,18 @@
   OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-class ThingyController extends EventTarget {
-  constructor(device) {
-    super();
+import Utilities from "./Utilities.js";
 
-    // thingy id
+class ThingyController {
+  constructor(device) {
+
+    // thingy id)
     this.setDevice(device);
-    this._init();
+    this.utilities = new Utilities(device);
+    this._initialize();
   }
 
-  _init() {
+  _initialize() {
     if (window.thingyController === undefined) {
         window.thingyController = {};
       }
@@ -48,57 +50,91 @@ class ThingyController extends EventTarget {
       }
 
       if (window.thingyController[this.tid].gattStatus === undefined) {
-        window.thingyController[this.tid].gattStatus = false;
+        window.thingyController[this.tid].gattStatus = true;
       }
 
-      if (window.thingyController[this.tid].operationQueue === undefined) {
-        window.thingyController[this.tid].operationQueue = [];
+      if (window.thingyController[this.tid].queuedOperations === undefined) {
+        window.thingyController[this.tid].queuedOperations = [];
       }
 
       if (window.thingyController[this.tid].executingQueuedOperations === undefined) {
         window.thingyController[this.tid].executingQueuedOperations = false;
       }
 
-      if (window.thingyController[this.tid].numExecutedOperationsWhileExecutingQueuedOperations === undefined) {
-        window.thingyController[this.tid].numExecutedOperationsWhileExecutingQueuedOperations = 0;
+      if (window.thingyController[this.tid].executedOperations === undefined) {
+        window.thingyController[this.tid].executedOperations = [];
       }
   }
 
-  setGattStatus(bool) {
-    window.thingyController[this.tid].gattStatus = bool;
+  setExecutedOperation(feature, method) {
+    if (this.device.connected) {
+      window.thingyController[this.tid].executedOperations.push({feature, method});
+    }
+  }
 
-    if (bool) {
-      window.thingyController[this.tid].numExecutedOperationsWhileExecutingQueuedOperations++;
-      this.device.dispatchEvent("gattavailable");
+  setGattStatus(bool) {
+    if (this.device.connected) {
+      window.thingyController[this.tid].gattStatus = bool;
+
+      if (bool) {
+        this.utilities.processEvent("gattavailable");
+      }
     }
   }
 
   getGattStatus() {
-    return window.thingyController[this.tid].gattStatus;
+    if (this.device.connected) {
+      return window.thingyController[this.tid].gattStatus;
+    }
   }
 
-  getQueueSize() {
-    return window.thingyController[this.tid].operationQueue.length;
+  getNumQueuedOperations() {
+    if (this.device.connected) {
+      return window.thingyController[this.tid].queuedOperations.length;
+    }
   }
 
-  getNextQueueElement() {
-    return window.thingyController[this.tid].operationQueue.shift();
+  getQueuedOperation(index) {
+    if (this.device.connected) {
+      if (window.thingyController[this.tid].queuedOperations.length >= index) {
+        return window.thingyController[this.tid].queuedOperations[index];
+      }
+    }
   }
 
-  addQueueElement(feature, method, f) {
-    window.thingyController[this.tid].operationQueue.push({feature, method, f});
+  removeQueuedOperation(index) {
+    if (this.device.connected) {
+      window.thingyController[this.tid].queuedOperations.splice(index, 1);
+    }
+  }
+
+  enqueue(feature, method, f) {
+    if (this.device.connected) {
+      window.thingyController[this.tid].queuedOperations.push({feature, method, f});
+      this.utilities.processEvent("operationqueued");
+    }
+  }
+
+  dequeue() {
+    if (this.device.connected) {
+      return window.thingyController[this.tid].queuedOperations.shift();
+    }
   }
 
   setExecutingQueuedOperations(bool) {
-    window.thingyController[this.tid].executingQueuedOperations = bool;
+    if (this.device.connected) {
+      window.thingyController[this.tid].executingQueuedOperations = bool;
 
-    if (bool) {
-      window.thingyController[this.tid].numExecutedOperationsWhileExecutingQueuedOperations = 0;
+      if (bool) {
+       window.thingyController[this.tid].executedOperations = [];
+      }
     }
   }
 
   getExecutingQueuedOperations() {
+    if (this.device.connected) {
       return window.thingyController[this.tid].executingQueuedOperations;
+    }
   }
 
   getDevice() {
@@ -107,13 +143,22 @@ class ThingyController extends EventTarget {
 
   setDevice(device) {
     this.device = device;
-    this.tid = this.device.device.id;
+    this.tid = device.device.id;
   }
 
-  // get 
-  // window.thingyController[this.tid].numExecutedOperationsWhileExecutingQueuedOperations
+  getExecutedOperation(index) {
+    if (this.device.connected) {
+      return window.thingyController[this.tid].executedOperations[index];
+    }
+  }
 
-  resetController() {
+  getNumExecutedOperations() {
+    if (this.device.connected) {
+      return window.thingyController[this.tid].executedOperations.length;
+    }
+  }
+
+  terminate() {
     window.thingyController[this.tid] = undefined;
   }
 }

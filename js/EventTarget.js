@@ -13,7 +13,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 */
 
 function defineProperties(target, descriptions) {
+  //console.log(target);
+  console.log(descriptions);
   for (const property in descriptions) {
+    console.log(target);
+    console.log(property);
+    console.log("--");
     Object.defineProperty(target, property, {
       configurable: true,
       value: descriptions[property],
@@ -26,7 +31,10 @@ const EventTargetMixin = (superclass, ...eventNames) => class extends superclass
     super(args);
     const eventTarget = document.createDocumentFragment();
 
+
     this.addEventListener = (type, ...args) => {
+      console.log(type);
+      console.log(args);
       return eventTarget.addEventListener(type, ...args);
     };
 
@@ -35,6 +43,8 @@ const EventTargetMixin = (superclass, ...eventNames) => class extends superclass
     };
 
     this.dispatchEvent = (event) => {
+      console.log(this);
+      console.log
       defineProperties(event, {currentTarget: this});
       if (!event.target) {
         defineProperties(event, {target: this});

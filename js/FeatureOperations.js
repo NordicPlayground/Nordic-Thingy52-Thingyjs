@@ -30,29 +30,39 @@
  */
 
 import EventTarget from "./EventTarget.js";
+import ThingyController from "./ThingyController.js";
+import Utilities from "./Utilities.js";
 
-class FeatureOperations extends EventTarget {
+class FeatureOperations {
   constructor(device, type) {
-    super();
     this.device = device;
+    this.utilities = new Utilities(this.device);
     this.type = type || this.constructor.name;
     this.latestReading = new Map();
   }
 
   async _connect() {
+    if (!("thingyController" in this)) {
+      // has to be put here rather than in the constructor as we need access to the id of the device
+      // which is not accessible before the device has performed its connect method
+      this.thingyController = new ThingyController(this.device);
+    }
+
+    this.thingyController.setExecutedOperation(this.type, "connect");
+    
     if (("connected" in this.characteristic) && this.characteristic.connected) {
       console.log(`You're already connected to the ${this.type} feature`);
       return true;
     }
 
-    if (this.getGattAvailable()) {
+    if (this.thingyController.getGattStatus()) {
       try {
-        this.setGattBusy();
+        this.thingyController.setGattStatus(false);
 
         this.service.service = await this.device.server.getPrimaryService(this.service.uuid);
         this.characteristic.characteristic = await this.service.service.getCharacteristic(this.characteristic.uuid);
 
-        this.setGattAvailable();
+        this.thingyController.setGattStatus(true);
 
         this.characteristic.connected = true;
         this.characteristic.notifying = false;
@@ -80,20 +90,16 @@ class FeatureOperations extends EventTarget {
 
         return true;
       } catch (error) {
-        this.setGattAvailable();
-        this.queueOperation("connect", this._connect.bind(this));
+        this.thingyController.setGattStatus(true);
+        this.thingyController.enqueue(this.type, "connect", this._connect.bind(this));
         this.characteristic.connected = false;
-        this.processError(error);
+        this.utilities.processEvent("error", this.type, error);
         return false;
       }
     } else {
-      this.queueOperation("connect", this._connect.bind(this));
+      this.thingyController.enqueue(this.type, "connect", this._connect.bind(this));
       return false;
     }
-  }
-
-  async _wait(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async _read(returnRaw = false) {
@@ -109,41 +115,44 @@ class FeatureOperations extends EventTarget {
       while (!this.characteristic.connected) {
         connectIteration++;
 
-        if (connectIteration === 50) {
-          const e = new Error(`As we couldn't connect to the ${this.type} feature, the read operation can't be executed`);
-          this.processError(e);
+        if (connectIteration === 250) {
+          const error = new Error(`As we couldn't connect to the ${this.type} feature, the read operation can't be executed`);
+          this.utilities.processEvent("error", this.type, error);
           return false;
         }
 
-        // waiting for the connect operation to go through
-        await this._wait(200);
+        // waiting a set amount of time for any ongoing BLE operation to conclude
+        await this.utilities.wait(20);
       }
 
+      this.thingyController.setExecutedOperation(this.type, "read");
+
       if (!this.hasProperty("read")) {
-        const e = new Error(`The ${this.type} feature does not support the read method`);
-        this.processError(e);
+        const error = new Error(`The ${this.type} feature does not support the read method`);
+        this.utilities.processEvent("error", this.type, error);
         return false;
       }
 
       if (!this.characteristic.decoder) {
-        const e = new Error("The characteristic you're trying to read does not have a specified decoder");
-        this.processError(e);
+        const error = new Error("The characteristic you're trying to read does not have a specified decoder");
+        this.utilities.processEvent("error", this.type, error);
         return false;
       }
 
       while (returnValue === false) {
         readIteration++;
+        console.log(readIteration);
 
-        if (readIteration === 50) {
-          const e = new Error("We could not process your read request at the moment due to high operational traffic");
-          this.processError(e);
+        if (readIteration === 250) {
+          const error = new Error("We could not process your read request at the moment due to high operational traffic");
+          this.utilities.processEvent("error", this.type, error);
           return false;
         }
 
-        if (this.getGattAvailable()) {
-          this.setGattBusy();
+        if (this.thingyController.getGattStatus()) {
+          this.thingyController.setGattStatus(false);
           let prop = await this.characteristic.characteristic.readValue();
-          this.setGattAvailable();
+          this.thingyController.setGattStatus(true);
 
           if (returnRaw !== true) {
             prop = await this.characteristic.decoder(prop);
@@ -151,14 +160,15 @@ class FeatureOperations extends EventTarget {
 
           returnValue = prop;
         } else {
-          await this._wait(200);
+          // waiting a set amount of time for any ongoing BLE operation to conclude
+          await this.utilities.wait(20);
         }
       }
 
       return returnValue;
     } catch (error) {
-      this.setGattAvailable();
-      this.processError(error);
+      this.thingyController.setGattStatus(true);
+      this.utilities.processEvent("error", this.type, error);
       return false;
     }
   }
@@ -166,8 +176,8 @@ class FeatureOperations extends EventTarget {
   async _write(prop) {
     try {
       if (prop === undefined) {
-        const e = new Error("You have to write a non-empty body");
-        this.processError(e);
+        const error = new Error("You have to write a non-empty body");
+        this.utilities.processEvent("error", this.type, error);
         return false;
       }
 
@@ -182,67 +192,67 @@ class FeatureOperations extends EventTarget {
       while (!this.characteristic.connected) {
         connectIteration++;
 
-        if (connectIteration === 50) {
-          const e = new Error(`As we couldn't connect to the ${this.type} feature, the read operation can't be executed`);
-          this.processError(e);
+        if (connectIteration === 250) {
+          const error = new Error(`As we couldn't connect to the ${this.type} feature, the write operation can't be executed`);
+          this.utilities.processEvent("error", this.type, error);
           return false;
         }
 
-        // waiting for the connect operation to go through
-        await this._wait(200);
+        // waiting a set amount of time for any ongoing BLE operation to conclude
+        await this.utilities.wait(20);
       }
 
+      this.thingyController.setExecutedOperation(this.type, "write");
+
       if (!this.hasProperty("write") && !this.hasProperty("writeWithoutResponse")) {
-        const e = new Error(`The ${this.type} feature does not support the write or writeWithoutResponse method`);
-        this.processError(e);
+        const error = new Error(`The ${this.type} feature does not support the write or writeWithoutResponse method`);
+        this.utilities.processEvent("error", this.type, error);
         return false;
       }
 
       if (!this.characteristic.encoder) {
-        const e = new Error("The characteristic you're trying to write does not have a specified encoder");
-        this.processError(e);
+        const error = new Error("The characteristic you're trying to write does not have a specified encoder");
+        this.utilities.processEvent("error", this.type, error);
         return false;
       }
 
       while (returnValue === false) {
         writeIteration++;
 
-        if (writeIteration === 50) {
-          const e = new Error("We could not process your read request at the moment due to high operational traffic");
-          this.processError(e);
+        if (writeIteration === 250) {
+          const error = new Error("We could not process your read request at the moment due to high operational traffic");
+          this.utilities.processEvent("error", this.type, error);
           return false;
         }
 
-        if (this.getGattAvailable()) {
+        if (this.thingyController.getGattStatus()) {
           const encodedProp = await this.characteristic.encoder(prop);
-          this.setGattBusy();
+          this.thingyController.setGattStatus(false);
           await this.characteristic.characteristic.writeValue(encodedProp);
-          this.setGattAvailable();
+          this.thingyController.setGattStatus(true);
 
           // emit event for successful write
-          const ce = new CustomEvent("write", {detail: {
-            feature: this.type,
-            value: prop,
-          }});
-          this.device.dispatchEvent(ce);
+          this.utilities.processEvent("write", this.type, prop);
+
           returnValue = true;
         } else {
-          await this._wait(200);
+          // waiting a set amount of time for any ongoing BLE operation to conclude
+          await this.utilities.wait(20);
         }
       }
 
       return returnValue;
     } catch (error) {
-      this.setGattAvailable();
-      this.processError(error);
+      this.thingyController.setGattStatus(true);
+      this.utilities.processEvent("error", this.type, error);
       return false;
     }
   }
 
   async _notify(enable, verify = false) {
     if (!(enable === true || enable === false)) {
-      const e = new Error("You have to specify the enable parameter (true/false)");
-      this.processError(e);
+      const error = new Error("You have to specify the enable parameter (true/false)");
+      this.utilities.processEvent("error", this.type, error);
       return;
     }
 
@@ -250,14 +260,22 @@ class FeatureOperations extends EventTarget {
       const connected = await this._connect();
 
       if (!connected) {
-        this.queueOperation("notify", this._notify.bind(this, enable, verify));
+        // done for convenience
+        this.thingyController.setGattStatus(true);
+        this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), this._notify.bind(this, enable, verify));
         return false;
       }
     }
 
+    this.thingyController.setExecutedOperation(this.type, (enable ? "start" : "stop"));
+
+    /*this.thingyController.setGattStatus(true);
+    this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), this._notify.bind(this, enable, verify));
+    return false;*/
+
     if (!this.hasProperty("notify")) {
-      const e = new Error(`The ${this.type} feature does not support the start/stop methods`);
-      this.processError(e);
+      const error = new Error(`The ${this.type} feature does not support the start/stop methods`);
+      this.utilities.processEvent("error", this.type, error);
       return;
     }
 
@@ -269,45 +287,35 @@ class FeatureOperations extends EventTarget {
     }
 
     if (!this.characteristic.decoder) {
-      const e = new Error("The characteristic you're trying to notify does not have a specified decoder");
-      this.processError(e);
+      const error = new Error("The characteristic you're trying to notify does not have a specified decoder");
+      this.utilities.processEvent("error", this.type, error);
       return;
     }
 
     const onReading = async (e) => {
       try {
-        const decodedData = await this.characteristic.decoder(e.target.value);
+        const data = await this.characteristic.decoder(e.target.value);
         let ce;
 
         if (verify) {
-          ce = new CustomEvent("verifyReaction", {detail: {feature: this.type, data: decodedData}});
-          this.dispatchEvent(ce);
+          /*ce = new CustomEvent("verifyReaction", {detail: {feature: this.type, data: decodedData}});
+          this.dispatchEvent(ce);*/
         } else {
-          this.latestReading.clear();
-
-          for (const elem in decodedData) {
-            this.latestReading.set(elem, decodedData[elem]);
-          }
-
-          const e = new Event("reading");
-          this.dispatchEvent(e);
-
-          ce = new CustomEvent("characteristicvaluechanged", {detail: {feature: this.type, data: decodedData}});
-          this.device.dispatchEvent(ce);
+          this.utilities.processEvent(this.type, this.type, data)
         }
       } catch (error) {
-        // have to find a way to remove event listeners from characteristics
+        this.utilities.processEvent("error", this.type, error);
       }
     };
 
     const characteristic = this.characteristic.characteristic;
 
-    if (this.getGattAvailable()) {
-      this.setGattBusy();
+    if (this.thingyController.getGattStatus()) {
+      this.thingyController.setGattStatus(false);
       if (enable) {
         try {
           const csn = await characteristic.startNotifications();
-          this.setGattAvailable();
+          this.thingyController.setGattStatus(true);
           
           if (!this.characteristic.hasEventListener) {
             csn.addEventListener("characteristicvaluechanged", onReading.bind(this));
@@ -322,16 +330,16 @@ class FeatureOperations extends EventTarget {
 
           return true;
         } catch (error) {
-          this.setGattAvailable();
-          this.queueOperation("notify", this._notify.bind(this, enable, verify));
+          this.thingyController.setGattStatus(true);
+          this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), this._notify.bind(this, enable, verify));
           this.characteristic.notifying = false;
-          this.processError(error);
+          this.utilities.processEvent("error", this.type, error);
           return false;
         }
       } else {
         try {
           const csn = await characteristic.stopNotifications();
-          this.setGattAvailable();
+          this.thingyController.setGattStatus(true);
 
           this.characteristic.notifying = false;
 
@@ -339,21 +347,17 @@ class FeatureOperations extends EventTarget {
             console.log(`Notifications disabled for the ${this.type} feature`);
           }
 
-          if (this.audioCtx) {
-            this.suspendAudioContext();
-          }
-
           return true;
         } catch (error) {
-          this.setGattAvailable();
-          this.queueOperation("notify", this._notify.bind(this, enable, verify));
+          this.thingyController.setGattStatus(true);
+          this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), this._notify.bind(this, enable, verify));
           this.characteristic.notifying = true;
-          this.processError(error);
+          this.utilities.processEvent("error", this.type, error);
           return false;
         }
       }
     } else {
-      this.queueOperation("notify", this._notify.bind(this, enable, verify));
+      this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), this._notify.bind(this, enable, verify));
       return false;
     }
   }
@@ -376,36 +380,6 @@ class FeatureOperations extends EventTarget {
 
   async write(data) {
     return await this._write(data);
-  }
-
-  setGattBusy() {
-    window.thingyController[this.device.device.id].gattBusy = true;
-  }
-
-  setGattAvailable() {
-    window.thingyController[this.device.device.id].gattBusy = false;
-
-    this.device.dispatchEvent(new Event("gattavailable"));
-  }
-
-  getGattAvailable() {
-    return !window.thingyController[this.device.device.id].gattBusy;
-  }
-
-  queueOperation(method, f) {
-    window.thingyController[this.device.device.id].operationQueue.push({feature: this.type, method, f});
-    this.device.dispatchEvent(new Event("operationqueued"));
-  }
-
-  processError(error) {
-    console.error(`The ${this.type} feature has reported an error: ${error}`);
-
-    const ce = new CustomEvent("error", {detail: {
-      feature: this.type,
-      error,
-    }});
-
-    this.device.dispatchEvent(ce);
   }
 }
 

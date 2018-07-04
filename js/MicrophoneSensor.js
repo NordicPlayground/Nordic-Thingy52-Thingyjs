@@ -89,7 +89,7 @@ class Microphone extends FeatureOperations {
       }
     }
 
-    super._notify(enable, verify);
+    await super._notify(enable, verify);
   }
 
   async verifyMicrophoneReaction(data) {
