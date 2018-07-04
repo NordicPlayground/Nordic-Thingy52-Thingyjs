@@ -330,7 +330,7 @@ class FeatureOperations {
           return true;
         } catch (error) {
           this.thingyController.setGattStatus(true);
-          this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), (enable, verify) => this._notify(enable, verify));
+          this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), this._notify.bind(this, enable, verify));
           this.characteristic.notifying = false;
           this.utilities.processEvent("error", this.type, error);
           return false;
