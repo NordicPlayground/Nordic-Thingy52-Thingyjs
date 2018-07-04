@@ -81,17 +81,6 @@ class Microphone extends FeatureOperations {
     }
   }
 
-  // have to override the generic method in FeatureOperations to add feature specific code
-  async _notify(enable, verify = false) {
-    if (enable === false) {
-      if (this.audioCtx) {
-        this.suspendAudioContext();
-      }
-    }
-
-    await super._notify(enable, verify);
-  }
-
   async verifyMicrophoneReaction(data) {
     if (this.getGattAvailable()) {
       try {
