@@ -178,7 +178,7 @@ class Thingy extends EventTarget {
 
       this.device.addEventListener('gattserverdisconnected', this.onDisconnected.bind(this));
 
-      this.connected = true;
+      this.setConnected(true);
 
       if (this.logEnabled) {
         console.log(`Found Thingy named "${this.device.name}", trying to connect`);
@@ -194,9 +194,11 @@ class Thingy extends EventTarget {
         console.log(`Connected to "${this.device.name}"`);
       }
     } catch (error) {
-      this.connected = false;
-      const e = new Error(error);
-      throw e;
+      this.setConnected(false);
+
+      if ("utilities" in this) {
+        this.utilities.processEvent("error", "thingy", error);
+      }
     }
   }
 
@@ -217,7 +219,7 @@ class Thingy extends EventTarget {
             let totalOperationsExecutedSinceLastIteration = 0;
 
             while (this.thingyController.getNumQueuedOperations() !== 0) {
-              if (!this.connected) {
+              if (!this.getConnected()) {
                 break;
               }
       
@@ -268,7 +270,6 @@ class Thingy extends EventTarget {
             } 
       
             this.thingyController.setExecutingQueuedOperations(false);
-            console.log("ended");
           }
         }
       }
@@ -278,14 +279,21 @@ class Thingy extends EventTarget {
     }
   }
 
+  getConnected() {
+    return this.connected;
+  }
+
+  setConnected(bool) {
+    this.connected = bool;
+  }
+
   resetDeviceProperties(id) {
-    this.connected = false;
-    
+    this.setConnected(false);
     this.thingyController.terminate();
   }
 
   onDisconnected({target}) {
-    if (!this.connected) {
+    if (!this.getConnected()) {
       this.resetDeviceProperties(target.id);
 
       if (this.logEnabled) {
@@ -293,8 +301,8 @@ class Thingy extends EventTarget {
       }
     } else {
       this.resetDeviceProperties(target.id);
-      const e = new Error(`The connection to the device named ${target.name} was lost.`);
-      this.utilities.processEvent("error", "thingy", e);
+      const error = new Error(`The connection to the device named ${target.name} was lost.`);
+      this.utilities.processEvent("error", "thingy", error);
     }
 
   }
@@ -302,8 +310,8 @@ class Thingy extends EventTarget {
   async disconnect() {
     try {
       await this.device.gatt.disconnect();
-    } catch (e) {
-      this.utilities.processEvent("error", "thingy", e);
+    } catch (error) {
+      this.utilities.processEvent("error", "thingy", error);
     }
   }
 }

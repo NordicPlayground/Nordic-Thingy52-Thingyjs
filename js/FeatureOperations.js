@@ -48,7 +48,7 @@ class FeatureOperations {
       this.thingyController = new ThingyController(this.device);
     }
 
-    this.thingyController.setExecutedOperation(this.type, "connect");
+    this.thingyController.addExecutedOperation(this.type, "connect");
     
     if (("connected" in this.characteristic) && this.characteristic.connected) {
       console.log(`You're already connected to the ${this.type} feature`);
@@ -80,7 +80,7 @@ class FeatureOperations {
 
           // something needs to be done here depending on the value returned
           // by the functions over. Could prove difficult, will have to see if
-          // I can alter how verifyAction & verifyReaction works, as it's
+          // we can alter how verifyAction & verifyReaction works, as it's
           // only used by the microphone per now
         }*/
 
@@ -90,10 +90,17 @@ class FeatureOperations {
 
         return true;
       } catch (error) {
-        this.thingyController.setGattStatus(true);
-        this.thingyController.enqueue(this.type, "connect", this._connect.bind(this));
+        if ("thingyController" in this) {
+          this.thingyController.setGattStatus(true);
+          this.thingyController.enqueue(this.type, "connect", this._connect.bind(this));
+        }
+        
         this.characteristic.connected = false;
-        this.utilities.processEvent("error", this.type, error);
+
+        if ("utilities" in this) {
+          this.utilities.processEvent("error", this.type, error);
+        }
+        
         return false;
       }
     } else {
@@ -125,7 +132,7 @@ class FeatureOperations {
         await this.utilities.wait(20);
       }
 
-      this.thingyController.setExecutedOperation(this.type, "read");
+      this.thingyController.addExecutedOperation(this.type, "read");
 
       if (!this.hasProperty("read")) {
         const error = new Error(`The ${this.type} feature does not support the read method`);
@@ -141,7 +148,6 @@ class FeatureOperations {
 
       while (returnValue === false) {
         readIteration++;
-        console.log(readIteration);
 
         if (readIteration === 250) {
           const error = new Error("We could not process your read request at the moment due to high operational traffic");
@@ -202,7 +208,7 @@ class FeatureOperations {
         await this.utilities.wait(20);
       }
 
-      this.thingyController.setExecutedOperation(this.type, "write");
+      this.thingyController.addExecutedOperation(this.type, "write");
 
       if (!this.hasProperty("write") && !this.hasProperty("writeWithoutResponse")) {
         const error = new Error(`The ${this.type} feature does not support the write or writeWithoutResponse method`);
@@ -260,18 +266,12 @@ class FeatureOperations {
       const connected = await this._connect();
 
       if (!connected) {
-        // done for convenience
-        this.thingyController.setGattStatus(true);
         this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), this._notify.bind(this, enable, verify));
         return false;
       }
     }
 
-    this.thingyController.setExecutedOperation(this.type, (enable ? "start" : "stop"));
-
-    /*this.thingyController.setGattStatus(true);
-    this.thingyController.enqueue(this.type, (enable ? "start" : "stop"), this._notify.bind(this, enable, verify));
-    return false;*/
+    this.thingyController.addExecutedOperation(this.type, (enable ? "start" : "stop"));
 
     if (!this.hasProperty("notify")) {
       const error = new Error(`The ${this.type} feature does not support the start/stop methods`);
