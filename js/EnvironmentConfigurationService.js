@@ -40,12 +40,10 @@ class EnvironmentConfigurationService extends FeatureOperations {
       uuid: this.device.TES_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TES_CONFIG_UUID,
-        decoder: this.decodeConfigData.bind(this),
-        encoder: this.encodeConfigData.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TES_CONFIG_UUID,
+      decoder: this.decodeConfigData.bind(this),
+      encoder: this.encodeConfigData.bind(this),
     };
   }
 
@@ -159,7 +157,7 @@ class EnvironmentConfigurationService extends FeatureOperations {
       }
 
       // Preserve values for those settings that are not being changed
-      const receivedData = await this._read("default", true);
+      const receivedData = await this._read(true);
       const littleEndian = true;
       temperatureInterval = temperatureInterval || receivedData.getUint16(0, littleEndian);
       pressureInterval = pressureInterval || receivedData.getUint16(2, littleEndian);

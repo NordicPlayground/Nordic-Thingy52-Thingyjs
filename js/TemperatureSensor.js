@@ -40,11 +40,9 @@ class TemperatureSensor extends FeatureOperations {
       uuid: this.device.TES_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TES_TEMP_UUID,
-        decoder: this.decodeTemperature.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TES_TEMP_UUID,
+      decoder: this.decodeTemperature.bind(this),
     };
   }
 

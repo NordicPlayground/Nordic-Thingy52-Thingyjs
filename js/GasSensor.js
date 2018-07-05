@@ -40,11 +40,9 @@ class GasSensor extends FeatureOperations {
       uuid: this.device.TES_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TES_GAS_UUID,
-        decoder: this.decodeGasData.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TES_GAS_UUID,
+      decoder: this.decodeGasData.bind(this),
     };
   }
 

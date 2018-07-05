@@ -40,12 +40,10 @@ class ConnectionParametersService extends FeatureOperations {
       uuid: this.device.TCS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TCS_CONN_PARAMS_UUID,
-        decoder: this.decodeConnectionParam.bind(this),
-        encoder: this.encodeConnectionParam.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TCS_CONN_PARAMS_UUID,
+      decoder: this.decodeConnectionParam.bind(this),
+      encoder: this.encodeConnectionParam.bind(this),
     };
   }
 
@@ -123,7 +121,7 @@ class ConnectionParametersService extends FeatureOperations {
         maxInterval = Math.round(maxInterval * 0.8);
       }
 
-      const receivedData = await this._read("default", true);
+      const receivedData = await this._read(true);
       const littleEndian = true;
       minInterval = minInterval || receivedData.getUint16(0, littleEndian);
       maxInterval = maxInterval || receivedData.getUint16(2, littleEndian);

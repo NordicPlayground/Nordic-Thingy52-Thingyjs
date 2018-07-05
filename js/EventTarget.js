@@ -26,6 +26,7 @@ const EventTargetMixin = (superclass, ...eventNames) => class extends superclass
     super(args);
     const eventTarget = document.createDocumentFragment();
 
+
     this.addEventListener = (type, ...args) => {
       return eventTarget.addEventListener(type, ...args);
     };

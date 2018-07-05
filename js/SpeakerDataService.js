@@ -30,38 +30,54 @@
  */
 
 import FeatureOperations from "./FeatureOperations.js";
+import SoundConfigurationService from "./SoundConfigurationService.js";
 
-class FirmwareService extends FeatureOperations {
+class SpeakerDataService extends FeatureOperations {
   constructor(device) {
-    super(device, "firmware");
+    super(device, "speakerdata");
 
-    // gatt service and characteristic used to communicate with Thingy's firmware version configuration
+    // gatt service and characteristic used to communicate with Thingy's speaker data
     this.service = {
-      uuid: this.device.TCS_UUID,
+      uuid: this.device.TSS_UUID,
     };
 
     this.characteristic = {
-      uuid: this.device.TCS_FW_VER_UUID,
-      decoder: this.decodeFirmwareVersion.bind(this),
+      uuid: this.device.TSS_SPEAKER_DATA_UUID,
+      encoder: this.encodeSpeakerData.bind(this),
     };
+
+    this.soundconfigurationservice = new SoundConfigurationService(this);
   }
 
-  decodeFirmwareVersion(data) {
+  async encodeSpeakerData(data) {
     try {
-      const major = data.getUint8(0);
-      const minor = data.getUint8(1);
-      const patch = data.getUint8(2);
-      const version = `v${major}.${minor}.${patch}`;
+      if (data.mode === 1) {
+        const dataArray = new Uint8Array(5);
+        const frequency = data.frequency;
+        const duration = data.duration;
+        const volume = data.volume;
 
-      const decodedVersion = {
-        firmware: version,
-      };
+        dataArray[0] = frequency & 0xff;
+        dataArray[1] = (frequency >> 8) & 0xff;
+        dataArray[2] = duration & 0xff;
+        dataArray[3] = (duration >> 8) & 0xff;
+        dataArray[4] = volume & 0xff;
 
-      return decodedVersion;
+        return dataArray;
+      } else if (data.mode === 2) {
+        return data.data;
+      } else if (data.mode === 3) {
+        const dataArray = new Uint8Array(1);
+        const sample = data.sample;
+
+        dataArray[0] = sample & 0xff;
+
+        return dataArray;
+      }
     } catch (error) {
       throw error;
     }
   }
 }
 
-export default FirmwareService;
+export default SpeakerDataService;

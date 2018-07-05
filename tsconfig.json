@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "module": "es6",
     "allowJs": true,
     "target": "es5",
     "outDir": "build",

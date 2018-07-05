@@ -40,13 +40,11 @@ class Microphone extends FeatureOperations {
       uuid: this.device.TSS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TSS_MIC_UUID,
-        decoder: this.decodeMicrophoneData.bind(this),
-        verifyAction: this.verifyMicrophoneAction.bind(this),
-        verifyReaction: this.verifyMicrophoneReaction.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TSS_MIC_UUID,
+      decoder: this.decodeMicrophoneData.bind(this),
+      // verifyAction: this.verifyMicrophoneAction.bind(this),
+      // verifyReaction: this.verifyMicrophoneReaction.bind(this),
     };
 
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -57,8 +55,13 @@ class Microphone extends FeatureOperations {
     this._MICROPHONE_STEP_SIZE_TABLE = [7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209,
       230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658, 724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272, 2499, 2749, 3024, 3327, 3660, 4026, 4428, 4871, 5358,
       5894, 6484, 7132, 7845, 8630, 9493, 10442, 11487, 12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767];
+
+    this.suspendAudioContext = this.suspendAudioContext.bind(this);
   }
 
+  async suspendAudioContext() {
+    await this.audioCtx.suspend();
+  }
   decodeMicrophoneData(event) {
     const audioPacket = event.buffer;
     const adpcm = {
@@ -79,11 +82,11 @@ class Microphone extends FeatureOperations {
   }
 
   async verifyMicrophoneReaction(data) {
-    if (!window.busyGatt) {
+    if (this.getGattAvailable()) {
       try {
         const microphoneData = data.detail.data;
-        await this._notify(false, "default", true);
-        this.removeEventListener("verifyReaction", this.characteristics.default.verifyReaction);
+        await this._notify(false, true);
+        this.removeEventListener("verifyReaction", this.characteristic.verifyReaction);
 
         if (microphoneData.byteLength === 131) {
           await this._notify(true);
@@ -195,6 +198,9 @@ class Microphone extends FeatureOperations {
       const framecount = buffer.byteLength / 2;
       if (this._audioNextTime === undefined) {
         this._audioNextTime = 0;
+      }
+      if (this.audioCtx.state === "suspended") {
+        this.audioCtx.resume();
       }
       const myArrayBuffer = this.audioCtx.createBuffer(channels, framecount, 16000);
       // This gives us the actual array that contains the data

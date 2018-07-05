@@ -30,7 +30,6 @@
  */
 
 import AdvertisingParametersService from "./AdvertisingParametersService.js";
-import EventTarget from "./EventTarget.js";
 import MicrophoneSensor from "./MicrophoneSensor.js";
 import MTUService from "./MTUService.js";
 import NameService from "./NameService.js";
@@ -56,16 +55,24 @@ import HeadingSensor from "./HeadingSensor.js";
 import EddystoneUrlService from "./EddystoneUrlService.js";
 import EnvironmentConfigurationService from "./EnvironmentConfigurationService.js";
 import MotionConfigurationService from "./MotionConfigurationService.js";
+import SoundConfigurationService from "./SoundConfigurationService.js";
+import SpeakerDataService from "./SpeakerDataService.js";
+import SpeakerStatusService from "./SpeakerStatusService.js";
+import BatteryService from "./BatteryService.js";
+import ThingyController from "./ThingyController.js";
+import Utilities from "./Utilities.js";
+import EventTarget from "./EventTarget.js";
 
 class Thingy extends EventTarget {
   constructor(options = {logEnabled: true}) {
     super();
 
+    this.logEnabled = options.logEnabled;
+    this.connected = false;
+
     if (this.logEnabled) {
       console.log("I am alive!");
     }
-
-    this.logEnabled = options.logEnabled;
 
     // TCS = Thingy Configuration Service
     this.TCS_UUID = "ef680100-9b35-4933-9b10-52ffa9740042";
@@ -121,13 +128,8 @@ class Thingy extends EventTarget {
       this.TSS_UUID,
     ];
 
-    if (!window.busyGatt) {
-      window.busyGatt = false;
-    }
-
-    this.receiveReading = this.receiveReading.bind(this);
-
-    this.addEventListener("characteristicvaluechanged", this.receiveReading);
+    this.addEventListener("gattavailable", this.executeQueuedOperations.bind(this));
+    this.addEventListener("operationqueued", this.executeQueuedOperations.bind(this));
 
     this.advertisingparameters = new AdvertisingParametersService(this);
     this.microphone = new MicrophoneSensor(this);
@@ -148,13 +150,17 @@ class Thingy extends EventTarget {
     this.gas = new GasSensor(this);
     this.gravityvector = new GravityVectorSensor(this);
     this.humidity = new HumiditySensor(this);
-    this.step = new StepCounterSensor(this);
+    this.stepcounter = new StepCounterSensor(this);
     this.rawdata = new RawDataSensor(this);
     this.eulerorientation = new EulerOrientationSensor(this);
     this.rotationmatrixorientation = new RotationMatrixOrientationSensor(this);
     this.heading = new HeadingSensor(this);
     this.environmentconfiguration = new EnvironmentConfigurationService(this);
     this.motionconfiguration = new MotionConfigurationService(this);
+    this.soundconfiguration = new SoundConfigurationService(this);
+    this.speakerdata = new SpeakerDataService(this);
+    this.speakerstatus = new SpeakerStatusService(this);
+    this.battery = new BatteryService(this);
   }
 
   async connect() {
@@ -169,7 +175,11 @@ class Thingy extends EventTarget {
           services: [this.TCS_UUID],
         }],
         optionalServices: this.serviceUUIDs,
-      });
+      })
+
+      this.device.addEventListener('gattserverdisconnected', this.onDisconnected.bind(this));
+
+      this.setConnected(true);
 
       if (this.logEnabled) {
         console.log(`Found Thingy named "${this.device.name}", trying to connect`);
@@ -178,33 +188,131 @@ class Thingy extends EventTarget {
       // Connect to GATT server
       this.server = await this.device.gatt.connect();
 
+      this.thingyController = new ThingyController(this);
+      this.utilities = new Utilities(this);
+
       if (this.logEnabled) {
         console.log(`Connected to "${this.device.name}"`);
       }
+
+      return true;
     } catch (error) {
-      const e = new Error(error);
-      throw e;
+      this.setConnected(false);
+
+      if ("utilities" in this) {
+        this.utilities.processEvent("error", "thingy", error);
+      }
+
+      return false;
     }
   }
 
-  receiveReading(reading) {
-    const source = reading.detail.feature;
-    const data = reading.detail.data;
-    const featureSpecificEvent = new CustomEvent(`${source}`, {detail: data});
+  // used to execute queued operations.
+  // as long as this method perceives operations to be executed (without regard to the operation's outcome) it will run.
+  // if an operation fails three times and seemingly no other operations are executed at the same time, the operation is discarded.
+  async executeQueuedOperations() {
+    try {
+      if (!this.thingyController.getExecutingQueuedOperations()) {
+        if (this.thingyController.getNumQueuedOperations() !== 0) {
+          if (this.thingyController.getGattStatus()) {
+            this.thingyController.setExecutingQueuedOperations(true);
+            
+            const triedOperations = {};
+            let operation;
+      
+            let totalOperationsExecutedUntilLastIteration = 0;
+            let totalOperationsExecutedSinceLastIteration = 0;
 
-    this.dispatchEvent(featureSpecificEvent);
+            while (this.thingyController.getNumQueuedOperations() !== 0) {
+              if (!this.getConnected()) {
+                break;
+              }
+      
+              totalOperationsExecutedSinceLastIteration = this.thingyController.getNumExecutedOperations() - totalOperationsExecutedUntilLastIteration;
+              totalOperationsExecutedUntilLastIteration = this.thingyController.getNumExecutedOperations();
+              operation = this.thingyController.dequeue();
+              
+              if (!(operation.feature in triedOperations)) {
+                triedOperations[operation.feature] = {};
+              }
+      
+              if (!(operation.method in triedOperations[operation.feature])) {
+                triedOperations[operation.feature][operation.method] = 0;
+              } 
+      
+              triedOperations[operation.feature][operation.method]++;
+              
+              const successful = await operation.f();
+
+              // this condition will hopefully never be met
+              if (triedOperations[operation.feature][operation.method] === 10 && successful !== true) {
+                this.thingyController.removeQueuedOperation(operation);
+                this.utilities.processEvent("operationdiscarded", "thingy", operation);
+              }
+      
+              if (triedOperations[operation.feature][operation.method] >= 3) {
+                if (successful !== true) {
+                  if (totalOperationsExecutedSinceLastIteration < 2) {
+                    if (totalOperationsExecutedSinceLastIteration === 1) {
+                      const op = this.thingyController.getExecutedOperation(this.thingyController.getNumExecutedOperations() - 1);
+
+                      if (op.feature !== operation.feature || op.method !== operation.method) {
+                        continue;
+                      }
+                    }
+
+                    // we have now tried this particular operation three times.
+                    // It's still not completing successfully, and no other operations
+                    // are going through. We are therefore discarding it.
+                    this.thingyController.removeQueuedOperation(operation);
+                    this.utilities.processEvent("operationdiscarded", "thingy", operation);
+                  }
+                }
+              }
+            } 
+      
+            this.thingyController.setExecutingQueuedOperations(false);
+          }
+        }
+      }
+    } catch (error) {
+      this.thingyController.setExecutingQueuedOperations(false);
+      this.utilities.processEvent("error", "thingy", error);
+    }
+  }
+
+  getConnected() {
+    return this.connected;
+  }
+
+  setConnected(bool) {
+    this.connected = bool;
+  }
+
+  resetDeviceProperties() {
+    this.setConnected(false);
+    this.thingyController.terminate();
+  }
+
+  onDisconnected({target}) {
+    if (!this.getConnected()) {
+      if (this.logEnabled) {
+        console.log(`Disconnected from device named ${target.name}`);
+      }
+    } else {
+      this.resetDeviceProperties();
+      this.utilities.processEvent("disconnected", "thingy");
+    }
   }
 
   async disconnect() {
     try {
+      this.resetDeviceProperties();
       await this.device.gatt.disconnect();
-      
-      if (this.logEnabled) {
-        console.log(`Disconnected from "${this.device.name}"`);
-      }
+      return true;
     } catch (error) {
-      const e = new Error(error);
-      throw e;
+      this.utilities.processEvent("error", "thingy", error);
+      return false;
     }
   }
 }

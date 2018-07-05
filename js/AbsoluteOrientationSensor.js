@@ -40,11 +40,9 @@ class AbsoluteOrientationSensor extends FeatureOperations {
       uuid: this.device.TMS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TMS_ORIENTATION_UUID,
-        decoder: this.decodeOrientationData.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TMS_ORIENTATION_UUID,
+      decoder: this.decodeOrientationData.bind(this),
     };
   }
 

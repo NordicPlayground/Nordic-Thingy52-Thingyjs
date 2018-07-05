@@ -40,12 +40,10 @@ class AdvertisingParametersService extends FeatureOperations {
       uuid: this.device.TCS_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TCS_ADV_PARAMS_UUID,
-        decoder: this.decodeAdvertisingParam.bind(this),
-        encoder: this.encodeAdvertisingParam.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TCS_ADV_PARAMS_UUID,
+      decoder: this.decodeAdvertisingParam.bind(this),
+      encoder: this.encodeAdvertisingParam.bind(this),
     };
   }
 
@@ -98,7 +96,7 @@ class AdvertisingParametersService extends FeatureOperations {
         }
       }
 
-      const receivedData = await this._read("default", true);
+      const receivedData = await this._read(true);
       const littleEndian = true;
       interval = interval || receivedData.getUint16(0, littleEndian);
       timeout = timeout || receivedData.getUint8(2, littleEndian);

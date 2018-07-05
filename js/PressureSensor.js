@@ -40,11 +40,9 @@ class PressureSensor extends FeatureOperations {
       uuid: this.device.TES_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TES_PRESSURE_UUID,
-        decoder: this.decodePressureData.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TES_PRESSURE_UUID,
+      decoder: this.decodePressureData.bind(this),
     };
   }
 

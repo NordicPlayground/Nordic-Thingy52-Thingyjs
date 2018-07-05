@@ -40,11 +40,9 @@ class ColorSensor extends FeatureOperations {
       uuid: this.device.TES_UUID,
     };
 
-    this.characteristics = {
-      default: {
-        uuid: this.device.TES_COLOR_UUID,
-        decoder: this.decodeColorData.bind(this),
-      },
+    this.characteristic = {
+      uuid: this.device.TES_COLOR_UUID,
+      decoder: this.decodeColorData.bind(this),
     };
   }
 
@@ -83,9 +81,9 @@ class ColorSensor extends FeatureOperations {
       }
 
       const formattedData = {
-        red: red.toFixed(0),
-        green: green.toFixed(0),
-        blue: blue.toFixed(0),
+        red: parseInt(red.toFixed(0)),
+        green: parseInt(green.toFixed(0)),
+        blue: parseInt(blue.toFixed(0)),
       };
 
       return formattedData;

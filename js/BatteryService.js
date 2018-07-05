@@ -31,37 +31,34 @@
 
 import FeatureOperations from "./FeatureOperations.js";
 
-class FirmwareService extends FeatureOperations {
+class BatteryService extends FeatureOperations {
   constructor(device) {
-    super(device, "firmware");
+    super(device, "battery");
 
-    // gatt service and characteristic used to communicate with Thingy's firmware version configuration
+    // gatt service and characteristic used to communicate with Thingy's battery level
     this.service = {
-      uuid: this.device.TCS_UUID,
+      uuid: "battery_service",
     };
 
     this.characteristic = {
-      uuid: this.device.TCS_FW_VER_UUID,
-      decoder: this.decodeFirmwareVersion.bind(this),
+      uuid: "battery_level",
+      decoder: this.decodeBatteryStatus.bind(this),
     };
   }
 
-  decodeFirmwareVersion(data) {
+  decodeBatteryStatus(data) {
     try {
-      const major = data.getUint8(0);
-      const minor = data.getUint8(1);
-      const patch = data.getUint8(2);
-      const version = `v${major}.${minor}.${patch}`;
+      const batteryStatus = data.getInt8(0);
 
-      const decodedVersion = {
-        firmware: version,
+      const decodedBatteryStatus = {
+        status: batteryStatus,
       };
 
-      return decodedVersion;
+      return decodedBatteryStatus;
     } catch (error) {
       throw error;
     }
   }
 }
 
-export default FirmwareService;
+export default BatteryService;
