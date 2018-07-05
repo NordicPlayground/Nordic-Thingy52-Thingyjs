@@ -1,3 +1,5 @@
+import EventTarget from "./EventTarget.js";
+
 class Utilities extends EventTarget {
     constructor(device) {
       super();

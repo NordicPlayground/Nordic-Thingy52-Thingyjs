@@ -61,6 +61,7 @@ import SpeakerStatusService from "./SpeakerStatusService.js";
 import BatteryService from "./BatteryService.js";
 import ThingyController from "./ThingyController.js";
 import Utilities from "./Utilities.js";
+import EventTarget from "./EventTarget.js";
 
 class Thingy extends EventTarget {
   constructor(options = {logEnabled: true}) {
@@ -193,12 +194,16 @@ class Thingy extends EventTarget {
       if (this.logEnabled) {
         console.log(`Connected to "${this.device.name}"`);
       }
+
+      return true;
     } catch (error) {
       this.setConnected(false);
 
       if ("utilities" in this) {
         this.utilities.processEvent("error", "thingy", error);
       }
+
+      return false;
     }
   }
 
@@ -284,31 +289,30 @@ class Thingy extends EventTarget {
     this.connected = bool;
   }
 
-  resetDeviceProperties(id) {
+  resetDeviceProperties() {
     this.setConnected(false);
     this.thingyController.terminate();
   }
 
   onDisconnected({target}) {
     if (!this.getConnected()) {
-      this.resetDeviceProperties(target.id);
-
       if (this.logEnabled) {
         console.log(`Disconnected from device named ${target.name}`);
       }
     } else {
-      this.resetDeviceProperties(target.id);
-      const error = new Error(`The connection to the device named ${target.name} was lost.`);
-      this.utilities.processEvent("error", "thingy", error);
+      this.resetDeviceProperties();
+      this.utilities.processEvent("disconnected", "thingy");
     }
-
   }
 
   async disconnect() {
     try {
+      this.resetDeviceProperties();
       await this.device.gatt.disconnect();
+      return true;
     } catch (error) {
       this.utilities.processEvent("error", "thingy", error);
+      return false;
     }
   }
 }

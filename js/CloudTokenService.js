@@ -49,7 +49,7 @@ class CloudTokenService extends FeatureOperations {
 
   decodeCloudToken(data) {
     try {
-      const decoder = new TextDecoder("utf-8");
+      const decoder = new TextDecoder();
       const token = decoder.decode(data);
 
       const decodedToken = {
@@ -68,9 +68,10 @@ class CloudTokenService extends FeatureOperations {
         throw error;
       }
 
-      const encoder = new TextEncoder("utf-8").encode(token);
+      const encoder = new TextEncoder();
+      const encodedToken = encoder.encode(token);
 
-      return encoder;
+      return encodedToken;
     } catch (error) {
       throw error;
     }
