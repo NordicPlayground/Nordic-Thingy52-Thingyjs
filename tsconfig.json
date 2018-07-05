@@ -4,7 +4,7 @@
     "allowJs": true,
     "target": "es5",
     "outDir": "build",
-    "checkJs": true,
+    "checkJs": false,
     "lib": [
       "es6",
       "dom"
