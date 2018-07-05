@@ -300,8 +300,7 @@ class Thingy extends EventTarget {
       }
     } else {
       this.resetDeviceProperties();
-      const error = new Error(`The connection to the device named ${target.name} was lost.`);
-      this.utilities.processEvent("error", "thingy", error);
+      this.utilities.processEvent("disconnected", "thingy");
     }
 
   }
