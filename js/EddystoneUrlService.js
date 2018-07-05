@@ -68,7 +68,7 @@ class EddystoneUrlService extends FeatureOperations {
         ".gov",
       ];
       const prefix = prefixArray[data.getUint8(0)];
-      const decoder = new TextDecoder("utf-8");
+      const decoder = new TextDecoder();
       let url = decoder.decode(data);
       url = prefix + url.slice(1);
 

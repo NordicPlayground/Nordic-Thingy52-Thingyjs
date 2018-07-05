@@ -49,7 +49,7 @@ class NameService extends FeatureOperations {
 
   decodeName = (data) => {
     try {
-      const decoder = new TextDecoder("utf-8");
+      const decoder = new TextDecoder();
       const name = decoder.decode(data);
       const decodedName = {
         name: name,

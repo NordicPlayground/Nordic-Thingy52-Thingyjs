@@ -295,8 +295,6 @@ class Thingy extends EventTarget {
 
   onDisconnected = ({target}) => {
     if (!this.getConnected()) {
-      this.resetDeviceProperties();
-
       if (this.logEnabled) {
         console.log(`Disconnected from device named ${target.name}`);
       }
@@ -310,9 +308,12 @@ class Thingy extends EventTarget {
 
   disconnect = async () => {
     try {
+      this.resetDeviceProperties();
       await this.device.gatt.disconnect();
+      return true;
     } catch (error) {
       this.utilities.processEvent("error", "thingy", error);
+      return false;
     }
   }
 }
