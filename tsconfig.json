@@ -3,7 +3,7 @@
     "module": "es6",
     "allowJs": true,
     "target": "es5",
-    "outDir": "build",
+    "outDir": "es5",
     "checkJs": false,
     "lib": [
       "es6",
@@ -11,6 +11,7 @@
     ]
   },
   "exclude": [
+    "index.js",
     "node_modules",
     "docs",
     "build",

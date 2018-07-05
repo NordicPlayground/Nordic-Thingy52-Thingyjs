@@ -1,3 +1,3 @@
-import Thingy from "./js/Thingy.js";
+import Thingy from "./es5/Thingy.js";
 
 export default Thingy;
