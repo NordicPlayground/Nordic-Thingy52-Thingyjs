@@ -43,8 +43,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
         while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
@@ -69,8 +69,8 @@ var FeatureOperations = /** @class */ (function () {
     function FeatureOperations(device, type) {
         var _this = this;
         this._connect = function () { return __awaiter(_this, void 0, void 0, function () {
-            var _this = this;
             var _a, _b, error_1;
+            var _this = this;
             return __generator(this, function (_c) {
                 switch (_c.label) {
                     case 0:
@@ -81,7 +81,9 @@ var FeatureOperations = /** @class */ (function () {
                         }
                         this.thingyController.addExecutedOperation(this.type, "connect");
                         if (("connected" in this.characteristic) && this.characteristic.connected) {
-                            console.log("You're already connected to the " + this.type + " feature");
+                            if (this.device.logEnabled) {
+                                console.log("You're already connected to the " + this.type + " feature");
+                            }
                             return [2 /*return*/, true];
                         }
                         if (!this.thingyController.getGattStatus()) return [3 /*break*/, 6];
@@ -311,8 +313,8 @@ var FeatureOperations = /** @class */ (function () {
         this._notify = function (enable, verify) {
             if (verify === void 0) { verify = false; }
             return __awaiter(_this, void 0, void 0, function () {
-                var _this = this;
                 var error, connected, error, error, onReading, characteristic, csn, error_4, csn, error_5;
+                var _this = this;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -338,7 +340,9 @@ var FeatureOperations = /** @class */ (function () {
                                 return [2 /*return*/];
                             }
                             if (enable === this.characteristic.notifying) {
-                                console.log("The " + this.type + " feature has already " + (this.characteristic.notifying ? "enabled" : "disabled") + " notifications");
+                                if (this.device.logEnabled) {
+                                    console.log("The " + this.type + " feature has already " + (this.characteristic.notifying ? "enabled" : "disabled") + " notifications");
+                                }
                                 // could also just return, but technically the operation
                                 // completed successfully as the desired outcome was achieved
                                 return [2 /*return*/, true];
@@ -409,7 +413,7 @@ var FeatureOperations = /** @class */ (function () {
                             this.thingyController.setGattStatus(true);
                             this.characteristic.notifying = false;
                             // not ideal
-                            if (this.type === "microhpone") {
+                            if (this.type === "microphone") {
                                 if (this.audioCtx) {
                                     this.suspendAudioContext();
                                 }

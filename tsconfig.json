@@ -15,6 +15,7 @@
     "node_modules",
     "docs",
     "build",
-    "ts"
+    "ts",
+    "es5"
   ]
 }

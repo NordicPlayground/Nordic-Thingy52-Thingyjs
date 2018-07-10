@@ -347,7 +347,7 @@ class FeatureOperations {
           this.characteristic.notifying = false;
 
           // not ideal
-          if (this.type === "microhpone") {
+          if (this.type === "microphone") {
             if (this.audioCtx) {
               this.suspendAudioContext();
             }
