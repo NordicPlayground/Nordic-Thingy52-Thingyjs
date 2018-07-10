@@ -97,9 +97,17 @@ Thingy offers several features, all of which rely on established BLE protocols f
 
 | Operation | Description |
 | --------- | ----------- |
-| start/stop | Subscribes to a feature and relays any incoming data from that feature as an event to the device object |
-| read | Reads data from the specified feature on Thingy |
-| write | Writes data to the specified feature on Thingy |
+| start/stop | Subscribes to a feature and relays any incoming data from that feature as an event to the device object. |
+| read | Reads data from the specified feature on Thingy. |
+| write | Writes data to the specified feature on Thingy. |
+
+**Note**: If any connect/start/stop operation is unsuccessful due to network congestion, the method is queued and and re-tried at a later time. If the operation continues to complete unsuccessfully, an event will be dispatched on thingy.operationdiscarded.
+
+| Event | Description |
+| --------- | ----------- |
+| thingy.error | An event with this name is emitted on any and all errors. The event contains information about the error, as well as the feature and operation that caused the error to occur. |
+| thingy.operationdiscarded | An event with this name is emitted whenever a connect/start/stop operation is discarded on one of Thingy's features. The event contains information about the operation that was cancelled along with a function call. |
+| thingy.write | An event with this name is emitted whenever a successful write operation has been performed. The event contains information about the feature that triggered the write operation, as well as the value that written. |
 
 # Supported operations
 
