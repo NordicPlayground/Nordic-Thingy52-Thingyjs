@@ -51,7 +51,10 @@ class FeatureOperations {
     this.thingyController.addExecutedOperation(this.type, "connect");
     
     if (("connected" in this.characteristic) && this.characteristic.connected) {
-      console.log(`You're already connected to the ${this.type} feature`);
+      if (this.device.logEnabled) {
+        console.log(`You're already connected to the ${this.type} feature`);
+      }
+
       return true;
     }
 
@@ -280,7 +283,9 @@ class FeatureOperations {
     }
 
     if (enable === this.characteristic.notifying) {
-      console.log(`The ${this.type} feature has already ${(this.characteristic.notifying ? "enabled" : "disabled")} notifications`);
+      if (this.device.logEnabled) {
+        console.log(`The ${this.type} feature has already ${(this.characteristic.notifying ? "enabled" : "disabled")} notifications`);
+      }
       // could also just return, but technically the operation
       // completed successfully as the desired outcome was achieved
       return true;
