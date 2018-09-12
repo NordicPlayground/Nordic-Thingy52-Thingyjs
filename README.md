@@ -7,17 +7,17 @@ The Nordic Thingy:52™ is a compact, power-optimized, multi-sensor development 
 
 This repository is an attempt to make it easier to start developing applications for Thingy:52 using Web Bluetooth. Web Bluetooth is a JavaScript API that makes it possible to communicate with Bluetooth Low Energy devices in web browsers. The implementation status for different browsers and platforms can be seen [here](https://github.com/WebBluetoothCG/web-bluetooth/blob/gh-pages/implementation-status.md). 
 
-This is work in progress, and for now this repository will help you connect to a Thingy:52 and access all services and characteristics except for speaker, microphone, MTU (Maximum Transmission Unit), and DFU (Device Firmware Upgrade):
+This is work in progress, and for now this repository will help you connect to a Thingy:52 and access all services and characteristics except for MTU (Maximum Transmission Unit), and DFU (Device Firmware Upgrade):
 
 ### Get started
 
 - Clone or download this repository.
-- If you've used this repository, you can open `index.html` in a supported browser and open the console (ctrl + shift + J or cmd + alt + J). 
+- If you've used this repository, you can serve `index.html` using any http server. You can then navigate to the server address in a supported browser and open the console (ctrl + shift + J or cmd + alt + J). 
 - Turn on your Thingy:52. 
-- Click the "Connect" button found in `index.html`.
+- Click the "Connect" button found on the page.
 - You can now choose your Thingy:52 and connect to it.
 - In the console, you can see the browser connect to the device and discover its services. 
-- When connected, the Thingy:52 will use the LED breathe feature and the LED will pulsate with RED light. 
+- When connected, the Thingy:52 will use the LED breathe feature and the LED will pulsate with a RED light. 
 - In the browser, it will also show the current temperature measured by the device in the HTML element below the connect button.
 
 ### Examples
