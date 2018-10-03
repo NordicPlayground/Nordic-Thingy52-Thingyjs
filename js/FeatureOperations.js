@@ -276,7 +276,7 @@ class FeatureOperations {
 
     this.thingyController.addExecutedOperation(this.type, (enable ? "start" : "stop"));
 
-    if (!this.hasProperty("notify")) {
+    if (!this.hasProperty("notify") && !this.hasProperty("indicate")) {
       const error = new Error(`The ${this.type} feature does not support the start/stop methods`);
       this.utilities.processEvent("error", this.type, error);
       return;

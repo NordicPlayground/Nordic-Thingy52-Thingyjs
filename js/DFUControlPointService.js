@@ -35,9 +35,9 @@ class NameService extends FeatureOperations {
   constructor(device) {
     super(device, "dfucontrolpoint");
 
-    // gatt service and characteristic used to communicate with Thingy's name configuration
+    // gatt service and characteristic used to communicate with Thingy's dfu control point configuration
     this.service = {
-      uuid: this.device.DFU_CTRL_POINT_UUID,
+      uuid: this.device.DFU_UUID,
     };
 
     this.characteristic = {
@@ -61,9 +61,9 @@ class NameService extends FeatureOperations {
 
   encodeDfuData(data) {
     try {
-      const encodedDfuData = data.getUint8(0);
-      console.log(encodedDfuData);
-      return encodedDfuData;
+      const dataArray = new Uint8Array(1);
+      dataArray[0] = data & 0xff;
+      return dataArray;
     } catch (error) {
       throw error;
     }
