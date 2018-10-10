@@ -31,7 +31,7 @@
 
 import FeatureOperations from "./FeatureOperations.js";
 
-class NameService extends FeatureOperations {
+class DFUControlPointService extends FeatureOperations {
   constructor(device) {
     super(device, "dfucontrolpoint");
 
@@ -70,4 +70,4 @@ class NameService extends FeatureOperations {
   }
 }
 
-export default NameService;
+export default DFUControlPointService;

@@ -120,6 +120,7 @@ class Thingy extends EventTarget {
     this.TSS_SPEAKER_STAT_UUID = "ef680503-9b35-4933-9b10-52ffa9740042";
     this.TSS_MIC_UUID = "ef680504-9b35-4933-9b10-52ffa9740042";
 
+    // DFU = Device Firmware Update
     this.DFU_UUID = "0000fe59-0000-1000-8000-00805f9b34fb";
     this.DFU_CTRL_POINT_UUID = "8ec90003-f315-4f60-9fb8-838830daea50";
 
