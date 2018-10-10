@@ -43,8 +43,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
         while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
+            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [0, t.value];
             switch (op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
@@ -69,8 +69,8 @@ var FeatureOperations = /** @class */ (function () {
     function FeatureOperations(device, type) {
         var _this = this;
         this._connect = function () { return __awaiter(_this, void 0, void 0, function () {
-            var _a, _b, error_1;
             var _this = this;
+            var _a, _b, error_1;
             return __generator(this, function (_c) {
                 switch (_c.label) {
                     case 0:
@@ -313,8 +313,8 @@ var FeatureOperations = /** @class */ (function () {
         this._notify = function (enable, verify) {
             if (verify === void 0) { verify = false; }
             return __awaiter(_this, void 0, void 0, function () {
-                var error, connected, error, error, onReading, characteristic, csn, error_4, csn, error_5;
                 var _this = this;
+                var error, connected, error, error, onReading, characteristic, csn, error_4, csn, error_5;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -334,7 +334,7 @@ var FeatureOperations = /** @class */ (function () {
                             _a.label = 2;
                         case 2:
                             this.thingyController.addExecutedOperation(this.type, (enable ? "start" : "stop"));
-                            if (!this.hasProperty("notify")) {
+                            if (!this.hasProperty("notify") && (!this.hasProperty("indicate"))) {
                                 error = new Error("The " + this.type + " feature does not support the start/stop methods");
                                 this.utilities.processEvent("error", this.type, error);
                                 return [2 /*return*/];

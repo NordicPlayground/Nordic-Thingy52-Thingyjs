@@ -53,8 +53,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
         while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
+            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [0, t.value];
             switch (op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
@@ -106,14 +106,15 @@ import BatteryService from "./BatteryService.js";
 import ThingyController from "./ThingyController.js";
 import Utilities from "./Utilities.js";
 import EventTarget from "./EventTarget.js";
+import DFUControlPointService from "./DFUControlPointService.js";
 var Thingy = /** @class */ (function (_super) {
     __extends(Thingy, _super);
     function Thingy(options) {
         if (options === void 0) { options = { logEnabled: true }; }
         var _this = _super.call(this) || this;
         _this.connect = function () { return __awaiter(_this, void 0, void 0, function () {
-            var _a, _b, error_1;
             var _this = this;
+            var _a, _b, error_1;
             return __generator(this, function (_c) {
                 switch (_c.label) {
                     case 0:
@@ -314,6 +315,9 @@ var Thingy = /** @class */ (function (_super) {
         _this.TSS_SPEAKER_DATA_UUID = "ef680502-9b35-4933-9b10-52ffa9740042";
         _this.TSS_SPEAKER_STAT_UUID = "ef680503-9b35-4933-9b10-52ffa9740042";
         _this.TSS_MIC_UUID = "ef680504-9b35-4933-9b10-52ffa9740042";
+        // DFU Service
+        _this.DFU_UUID = "0000fe59-0000-1000-8000-00805f9b34fb";
+        _this.DFU_CTRL_POINT_UUID = "8ec90003-f315-4f60-9fb8-838830daea50";
         _this.serviceUUIDs = [
             "battery_service",
             _this.TCS_UUID,
@@ -321,6 +325,7 @@ var Thingy = /** @class */ (function (_super) {
             _this.TUIS_UUID,
             _this.TMS_UUID,
             _this.TSS_UUID,
+            _this.DFU_UUID,
         ];
         _this.addEventListener("gattavailable", function () { return _this.executeQueuedOperations(); });
         _this.addEventListener("operationqueued", function () { return _this.executeQueuedOperations(); });
@@ -354,6 +359,7 @@ var Thingy = /** @class */ (function (_super) {
         _this.speakerdata = new SpeakerDataService(_this);
         _this.speakerstatus = new SpeakerStatusService(_this);
         _this.battery = new BatteryService(_this);
+        _this.dfucontrolpoint = new DFUControlPointService(_this);
         return _this;
     }
     return Thingy;
