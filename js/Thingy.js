@@ -62,8 +62,8 @@ import BatteryService from "./BatteryService.js";
 import ThingyController from "./ThingyController.js";
 import Utilities from "./Utilities.js";
 import EventTarget from "./EventTarget.js";
-import DFUControlPointServiceFirmwarev1 from "./DFUControlPointService_Firmware_v1.js";
-import DFUControlPointServiceFirmwarev2 from "./DFUControlPointService_Firmware_v2.js";
+import DFUControlPointServiceFirmwarev1 from "./DFUControlPointServiceFirmwarev1.js";
+import DFUControlPointServiceFirmwarev2 from "./DFUControlPointServiceFirmwarev2.js";
 class Thingy extends EventTarget {
   constructor(options = {logEnabled: true}) {
     super();
