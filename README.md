@@ -7,7 +7,7 @@ The Nordic Thingy:52™ is a compact, power-optimized, multi-sensor development 
 
 This repository is an attempt to make it easier to start developing applications for Thingy:52 using Web Bluetooth. Web Bluetooth is a JavaScript API that makes it possible to communicate with Bluetooth Low Energy devices in web browsers. The implementation status for different browsers and platforms can be seen [here](https://github.com/WebBluetoothCG/web-bluetooth/blob/gh-pages/implementation-status.md). 
 
-This is work in progress, and for now this repository will help you connect to a Thingy:52 and access all services and characteristics except for speaker, microphone, MTU (Maximum Transmission Unit), and DFU (Device Firmware Upgrade):
+This is work in progress, and for now this repository will help you connect to a Thingy:52 and access all services and characteristics except for speaker, microphone, MTU (Maximum Transmission Unit):
 
 ### Get started
 
@@ -120,7 +120,7 @@ Thingy offers several features, all of which rely on established BLE protocols f
 | Cloud token | No | Yes | Yes |
 | Color | Yes | No | No |
 | Connection parameters | No | Yes | Yes |
-| DFU (in development) | - | - | - |
+| DFU | Yes | No | Yes |
 | Eddystone url | No | Yes | Yes |
 | Environment configuration | No | Yes | Yes |
 | Euler orientation  | Yes | No | No |
@@ -283,13 +283,17 @@ Allows interaction with the connected device's connection parameters
             - timeout (Supervision timeout). Integer in the range 100 to 32000 (100ms to 32s)
 
 ### DFU
-`thingy.dfu`
+`thingy.dfucontrolpoint`
 
 Allows interaction with the connected device's DFU service (Device Firmware Upgrade)
 
 **Supported operations**
 
-In development
+-   `start` - Starts sending notifications from the DFU control point characteristic.
+-   `stop`  - Stops sending notifications from the DFU control point characteristic.
+-   `write` - Writes to the DFU control point characteristic.
+    - **Parameters**:
+        - Number - Write the number 1 to put the device in DFU mode, enabling Device Firmware Update. This will disconnect the device and it can be reconnected to with the name 'thingyDfu'. To execute the DFU transfer, an external library such as **[this](https://github.com/thegecko/web-bluetooth-dfu)** can be used.
 
 ### Eddystone Url
 `thingy.eddystone`
