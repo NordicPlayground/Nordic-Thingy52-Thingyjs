@@ -200,8 +200,8 @@ Allows interaction with the connected device's absolute orientation sensor
 
 **Supported operations**
 
--   `start` - Starts sending absolute orientation data from the connected device
--   `stop`  - Terminates sending absolute orientation data from the connected device
+-   `start` - Starts sending absolute orientation data from the connected device.
+-   `stop`  - Terminates sending absolute orientation data from the connected device.
 
 ### Advertising Parameters
 `thingy.advertisingparameters`
@@ -210,7 +210,7 @@ Allows interaction with the connected device's advertising parameters
 
 **Supported operations**
 
--   `read` - Reads the connected device's advertising parameters
+-   `read` - Reads the connected device's advertising parameters.
 -   `write` - Writes the advertising parameters of the connected device.
     - **Parameters**:
         - Object:
@@ -226,9 +226,9 @@ Allows interaction with the connected device's battery level
 
 **Supported operations**
 
--   `start` - Starts sending battery level data from the connected device
--   `stop`  - Terminates sending battery level data from the connected device
--   `read`  - Reads the connected device's battery level
+-   `start` - Starts sending battery level data from the connected device.
+-   `stop`  - Terminates sending battery level data from the connected device.
+-   `read`  - Reads the connected device's battery level.
 
 ### Button
 `thingy.button`
@@ -239,8 +239,8 @@ Allows interaction with the connected device's button
 
 **Supported operations**
 
--   `start` - Starts sending button data from the connected device
--   `stop`  - Terminates sending button data from the connected device
+-   `start` - Starts sending button data from the connected device.
+-   `stop`  - Terminates sending button data from the connected device.
 
 ### Cloud Token
 `thingy.cloudtoken`
@@ -249,7 +249,7 @@ Allows interaction with the connected device's cloud token service
 
 **Supported operations**
 
--   `read` - Reads the cloud token currently written to the connected device
+-   `read` - Reads the cloud token currently written to the connected device.
 -   `write` - Writes the cloud token of the connected device.
     - **Parameters**:
         - Cloud token - String shorter than or equal to 250 characters.
@@ -263,8 +263,8 @@ Allows interaction with the connected device's color sensor (not LED)
 
 **Supported operations**
 
--   `start` - Starts sending color data from the connected device
--   `stop`  - Terminates sending color data from the connected device
+-   `start` - Starts sending color data from the connected device.
+-   `stop`  - Terminates sending color data from the connected device.
 
 ### Connection Parameters
 `thingy.connectionparameters`
@@ -273,7 +273,7 @@ Allows interaction with the connected device's connection parameters
 
 **Supported operations**
 
--   `read` - Reads the connected device's connection parameters
+-   `read` - Reads the connected device's connection parameters.
 -   `write` - Writes the connection parameters of the connected device.
     - **Parameters**:
         - Object:
@@ -283,14 +283,14 @@ Allows interaction with the connected device's connection parameters
             - timeout (Supervision timeout). Integer in the range 100 to 32000 (100ms to 32s)
 
 ### DFU
-`thingy.dfu`
+`thingy.dfucontrolpoint`
 
 Allows interaction with the connected device's DFU service (Device Firmware Upgrade)
 
 **Supported operations**
 
--   `start` - Starts sending notifications from the DFU control point characteristic
--   `stop`  - Stops sending notifications from the DFU control point characteristic
+-   `start` - Starts sending notifications from the DFU control point characteristic.
+-   `stop`  - Stops sending notifications from the DFU control point characteristic.
 -   `write` - Writes to the DFU control point characteristic.
     - **Parameters**:
         - Number - Write the number 1 to put the device in DFU mode, enabling Device Firmware Update. This will disconnect the device and it can be reconnected to with the name 'thingyDfu'. To execute the DFU transfer, an external library such as **[this](https://github.com/thegecko/web-bluetooth-dfu)** can be used.
@@ -302,7 +302,7 @@ Allows interaction with the connected device's eddystone url service
 
 **Supported operations**
 
--   `read` - Reads the connected device's eddystone url
+-   `read` - Reads the connected device's eddystone url.
 -   `write` - Writes the eddystone url of the connected device.
     - **Parameters**:
         - Eddystone url - String between 3 and 17 characters, according to **[this](https://github.com/google/eddystone/tree/master/eddystone-url)** format
@@ -314,8 +314,8 @@ Allows interaction with the connected device's environment configuration
 
 **Supported operations**
 
--   `read` - Reads the connected device's current environment configuration
--   `write` - Writes the environment configuration of the connected device
+-   `read` - Reads the connected device's current environment configuration.
+-   `write` - Writes the environment configuration of the connected device.
     - **Parameters**:
         - Object:
             - temperatureInterval (Temperature sensor update interval in ms). Integer in the range 100 ms to 60 000 ms.
@@ -337,8 +337,8 @@ Allows interaction with the connected device's euler orientation sensor
 
 **Supported operations**
 
--   `start` - Starts sending euler orientation data from the connected device
--   `stop`  - Terminates sending euler orientation data from the connected device
+-   `start` - Starts sending euler orientation data from the connected device.
+-   `stop`  - Terminates sending euler orientation data from the connected device.
 
 ### Firmware
 `thingy.firmware`
@@ -347,7 +347,7 @@ Allows interaction with the connected device's firmware service
 
 **Supported operations**
 
--   `read` - Reads the current firmware version deployed on the device
+-   `read` - Reads the current firmware version deployed on the device.
 
 
 ### Gas
@@ -359,8 +359,8 @@ Allows interaction with the connected device's gas sensor (co2 and tvoc)
 
 **Supported operations**
 
--   `start` - Starts sending gas data from the connected device
--   `stop`  - Terminates sending gas data from the connected device
+-   `start` - Starts sending gas data from the connected device.
+-   `stop`  - Terminates sending gas data from the connected device.
 
 ### Gravity vector
 `thingy.gravityvector`
@@ -371,8 +371,8 @@ Allows interaction with the connected device's gravity vector sensor
 
 **Supported operations**
 
--   `start` - Starts sending gravity vector data from the connected device
--   `stop`  - Terminates sending gravity vector data from the connected device
+-   `start` - Starts sending gravity vector data from the connected device.
+-   `stop`  - Terminates sending gravity vector data from the connected device.
 
 ### Heading
 `thingy.heading`
@@ -383,8 +383,8 @@ Allows interaction with the connected device's heading sensor
 
 **Supported operations**
 
--   `start` - Starts sending heading data from the connected device
--   `stop`  - Terminates sending heading data from the connected device
+-   `start` - Starts sending heading data from the connected device.
+-   `stop`  - Terminates sending heading data from the connected device.
 
 ### Humidity
 `thingy.humidity`
@@ -395,8 +395,8 @@ Allows interaction with the connected device's humidity sensor
 
 **Supported operations**
 
--   `start` - Starts sending humidity data from the connected device
--   `stop`  - Terminates sending humidity data from the connected device
+-   `start` - Starts sending humidity data from the connected device.
+-   `stop`  - Terminates sending humidity data from the connected device.
 
 ### LED
 `thingy.led`
@@ -405,8 +405,8 @@ Allows interaction with the connected device's LED
 
 **Supported operations**
 
--   `read` - reads the connected device's current LED configuration
--   `write` - Writes the LED configuration of the connected device
+-   `read` - reads the connected device's current LED configuration.
+-   `write` - Writes the LED configuration of the connected device.
     - **Parameters**:
         - Object:
             - mode - Mode of the LED. Can be one of the following: constant, breathe, oneshot, off.
@@ -431,8 +431,8 @@ Allows interaction with the connected device's microphone
 
 **Supported operations**
 
--   `start` - Starts sending microphone data from the connected device
--   `stop`  - Terminates sending microphone data from the connected device
+-   `start` - Starts sending microphone data from the connected device.
+-   `stop`  - Terminates sending microphone data from the connected device.
 
 ### Motion Configuration
 `thingy.motionconfiguration`
@@ -441,8 +441,8 @@ Allows interaction with the connected device's motion configuration
 
 **Supported operations**
 
--   `read` - Reads the connected device's current motion configuration
--   `write` - Writes the motion configuration of the connected device
+-   `read` - Reads the connected device's current motion configuration.
+-   `write` - Writes the motion configuration of the connected device.
     - **Parameters**:
         - Object:
             - stepCounterInterval (Sets the step counter interval). Must be in the range 100 ms to 5000 ms.
@@ -458,7 +458,7 @@ Allows interaction with the connected device's MTU service (Maximum Transmission
 
 **Supported operations**
 
--   `read` - Reads the MTU of the connected device
+-   `read` - Reads the MTU of the connected device.
 -   `write` - Writes the MTU of the connected device.
     - **Parameters**:
         - MTU - Integer in the range 23 to 276.
@@ -471,7 +471,7 @@ Allows interaction with the connected device's name service
 
 **Supported operations**
 
--   `read` - Reads the name of the connected device
+-   `read` - Reads the name of the connected device.
 -   `write` - Writes the name of the connected device.
     - **Parameters**:
         - Name - String shorter than or equal to 10 characters.
@@ -485,8 +485,8 @@ Allows interaction with the connected device's pressure sensor
 
 **Supported operations**
 
--   `start` - Starts sending pressure data from the connected device
--   `stop`  - Terminates sending pressure data from the connected device
+-   `start` - Starts sending pressure data from the connected device.
+-   `stop`  - Terminates sending pressure data from the connected device.
 
 ### Quaternion orientation
 `thingy.quaternionorientation`
@@ -497,8 +497,8 @@ Allows interaction with the connected device's quaternion orientation sensor
 
 **Supported operations**
 
--   `start` - Starts sending quaternion orientation data from the connected device
--   `stop`  - Terminates sending quaternion orientation data from the connected device
+-   `start` - Starts sending quaternion orientation data from the connected device.
+-   `stop`  - Terminates sending quaternion orientation data from the connected device.
 
 ### Raw data
 `thingy.rawdata`
@@ -509,8 +509,8 @@ Allows interaction with the connected device's raw data sensor (includes acceler
 
 **Supported operations**
 
--   `start` - Starts sending raw data from the connected device
--   `stop`  - Terminates sending raw data from the connected device
+-   `start` - Starts sending raw data from the connected device.
+-   `stop`  - Terminates sending raw data from the connected device.
 
 ### Rotation matrix orientation
 `thingy.rotationmatrixorientation`
@@ -521,8 +521,8 @@ Allows interaction with the connected device's rotation matrix orientation senso
 
 **Supported operations**
 
--   `start` - Starts sending rotation matrix orientation data from the connected device
--   `stop`  - Terminates sending rotation matrix orientation data from the connected device
+-   `start` - Starts sending rotation matrix orientation data from the connected device.
+-   `stop`  - Terminates sending rotation matrix orientation data from the connected device.
 
 ### Sound Configuration
 `thingy.soundconfiguration`
@@ -531,8 +531,8 @@ Allows interaction with the connected device's sound configuration
 
 **Supported operations**
 
--   `read` - Reads the connected device's current sound configuration
--   `write` - Writes the sound configuration of the connected device
+-   `read` - Reads the connected device's current sound configuration.
+-   `write` - Writes the sound configuration of the connected device.
     - **Parameters**:
         - Object:
             - speakerMode (Sets the speaker mode). Must be one of the integers:
@@ -551,7 +551,7 @@ Note that speaker mode has to be set to the desired mode beforehand by writing t
 
 **Supported operations**
 
--   `write` - Writes to the speaker of the connected device
+-   `write` - Writes to the speaker of the connected device.
     - **Parameters**:
         - Object:
             - mode - Mode of the speaker. Can be one of the following: 1, 2 or 3.
@@ -573,8 +573,8 @@ Allows interaction with the connected device's speaker status
 
 **Supported operations**
 
--   `start` - Starts sending the speaker status from the connected device
--   `stop`  - Terminates sending the speaker status from the connected device
+-   `start` - Starts sending the speaker status from the connected device.
+-   `stop`  - Terminates sending the speaker status from the connected device.
 
 ### Step counter
 `thingy.stepcounter`
@@ -585,8 +585,8 @@ Allows interaction with the connected device's step counter sensor
 
 **Supported operations**
 
--   `start` - Starts sending step counter data from the connected device
--   `stop`  - Terminates sending step counter data from the connected device
+-   `start` - Starts sending step counter data from the connected device.
+-   `stop`  - Terminates sending step counter data from the connected device.
 
 ### Tap
 `thingy.tap`
@@ -597,8 +597,8 @@ Allows interaction with the connected device's tap sensor
 
 **Supported operations**
 
--   `start` - Starts sending tap data from the connected device
--   `stop`  - Terminates sending tap data from the connected device
+-   `start` - Starts sending tap data from the connected device.
+-   `stop`  - Terminates sending tap data from the connected device.
 
 ### Temperature
 `thingy.temperature`
@@ -609,5 +609,5 @@ Allows interaction with the connected device's temperature sensor
 
 **Supported operations**
 
--   `start` - Starts sending temperature data from the connected device
--   `stop`  - Terminates sending temperature data from the connected device
+-   `start` - Starts sending temperature data from the connected device.
+-   `stop`  - Terminates sending temperature data from the connected device.
