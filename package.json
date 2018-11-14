@@ -1,6 +1,6 @@
 {
   "name": "thingy52_web_bluetooth",
-  "version": "1.4.1-transpiled",
+  "version": "1.5.0-transpiled",
   "description": "API for connecting to and interacting with Nordic Semiconductor's Thingy:52 in the browser",
   "main": "index.js",
   "directories": {
