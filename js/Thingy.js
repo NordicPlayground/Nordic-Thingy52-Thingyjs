@@ -62,6 +62,7 @@ import BatteryService from "./BatteryService.js";
 import ThingyController from "./ThingyController.js";
 import Utilities from "./Utilities.js";
 import EventTarget from "./EventTarget.js";
+import DFUControlPointService from "./DFUControlPointService.js";
 
 class Thingy extends EventTarget {
   constructor(options = {logEnabled: true}) {
@@ -119,6 +120,10 @@ class Thingy extends EventTarget {
     this.TSS_SPEAKER_STAT_UUID = "ef680503-9b35-4933-9b10-52ffa9740042";
     this.TSS_MIC_UUID = "ef680504-9b35-4933-9b10-52ffa9740042";
 
+    // DFU = Device Firmware Update
+    this.DFU_UUID = "0000fe59-0000-1000-8000-00805f9b34fb";
+    this.DFU_CTRL_POINT_UUID = "8ec90003-f315-4f60-9fb8-838830daea50";
+
     this.serviceUUIDs = [
       "battery_service",
       this.TCS_UUID,
@@ -126,6 +131,7 @@ class Thingy extends EventTarget {
       this.TUIS_UUID,
       this.TMS_UUID,
       this.TSS_UUID,
+      this.DFU_UUID,
     ];
 
     this.addEventListener("gattavailable", this.executeQueuedOperations.bind(this));
@@ -161,6 +167,7 @@ class Thingy extends EventTarget {
     this.speakerdata = new SpeakerDataService(this);
     this.speakerstatus = new SpeakerStatusService(this);
     this.battery = new BatteryService(this);
+    this.dfucontrolpoint = new DFUControlPointService(this);
   }
 
   async connect() {
