@@ -62,8 +62,8 @@ import BatteryService from "./BatteryService.js";
 import ThingyController from "./ThingyController.js";
 import Utilities from "./Utilities.js";
 import EventTarget from "./EventTarget.js";
-import DFUControlPointService from "./DFUControlPointService.js";
-
+import DFUControlPointServiceFirmwarev1 from "./DFUControlPointService_Firmware_v1.js";
+import DFUControlPointServiceFirmwarev2 from "./DFUControlPointService_Firmware_v2.js";
 class Thingy extends EventTarget {
   constructor(options = {logEnabled: true}) {
     super();
@@ -122,7 +122,8 @@ class Thingy extends EventTarget {
 
     // DFU = Device Firmware Update
     this.DFU_UUID = "0000fe59-0000-1000-8000-00805f9b34fb";
-    this.DFU_CTRL_POINT_UUID = "8ec90003-f315-4f60-9fb8-838830daea50";
+    this.DFU_CTRL_POINT_UUID_VERSION_1 = "8ec90001-f315-4f60-9fb8-838830daea50";
+    this.DFU_CTRL_POINT_UUID_VERSION_2 = "8ec90003-f315-4f60-9fb8-838830daea50";
 
     this.serviceUUIDs = [
       "battery_service",
@@ -167,7 +168,8 @@ class Thingy extends EventTarget {
     this.speakerdata = new SpeakerDataService(this);
     this.speakerstatus = new SpeakerStatusService(this);
     this.battery = new BatteryService(this);
-    this.dfucontrolpoint = new DFUControlPointService(this);
+    this.dfucontrolpoint_v1 = new DFUControlPointServiceFirmwarev1(this);
+    this.dfucontrolpoint_v2 = new DFUControlPointServiceFirmwarev2(this);
   }
 
   async connect() {

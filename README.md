@@ -283,9 +283,11 @@ Allows interaction with the connected device's connection parameters
             - timeout (Supervision timeout). Integer in the range 100 to 32000 (100ms to 32s)
 
 ### DFU
-`thingy.dfucontrolpoint`
+`thingy.dfucontrolpoint_v1`
+`thingy.dfucontrolpoint_v2`
 
-Allows interaction with the connected device's DFU service (Device Firmware Upgrade)
+Allows interaction with the connected device's DFU service (Device Firmware Upgrade). Note that depending on which firmware version the Thingy has,
+the characteristic is different. If the firmware is version 1.x, use the 'thingy.dfucontrolpoint_v1' characteristic. If it is 2.x, use the 'thingy.dfucontrolpoint_v2' characteristic. This is due to a change in the UUID of the service from firmware version 1.1.0 to 2.0.0.
 
 **Supported operations**
 
