@@ -106,7 +106,8 @@ import BatteryService from "./BatteryService.js";
 import ThingyController from "./ThingyController.js";
 import Utilities from "./Utilities.js";
 import EventTarget from "./EventTarget.js";
-import DFUControlPointService from "./DFUControlPointService.js";
+import DFUControlPointServiceFirmwarev1 from "./DFUControlPointServiceFirmwarev1.js";
+import DFUControlPointServiceFirmwarev2 from "./DFUControlPointServiceFirmwarev2.js";
 var Thingy = /** @class */ (function (_super) {
     __extends(Thingy, _super);
     function Thingy(options) {
@@ -317,7 +318,8 @@ var Thingy = /** @class */ (function (_super) {
         _this.TSS_MIC_UUID = "ef680504-9b35-4933-9b10-52ffa9740042";
         // DFU Service
         _this.DFU_UUID = "0000fe59-0000-1000-8000-00805f9b34fb";
-        _this.DFU_CTRL_POINT_UUID = "8ec90003-f315-4f60-9fb8-838830daea50";
+        _this.DFU_CTRL_POINT_UUID_VERSION_1 = "8ec90001-f315-4f60-9fb8-838830daea50";
+        _this.DFU_CTRL_POINT_UUID_VERSION_2 = "8ec90003-f315-4f60-9fb8-838830daea50";
         _this.serviceUUIDs = [
             "battery_service",
             _this.TCS_UUID,
@@ -359,7 +361,8 @@ var Thingy = /** @class */ (function (_super) {
         _this.speakerdata = new SpeakerDataService(_this);
         _this.speakerstatus = new SpeakerStatusService(_this);
         _this.battery = new BatteryService(_this);
-        _this.dfucontrolpoint = new DFUControlPointService(_this);
+        _this.dfucontrolpoint_v1 = new DFUControlPointServiceFirmwarev1(_this);
+        _this.dfucontrolpoint_v2 = new DFUControlPointServiceFirmwarev2(_this);
         return _this;
     }
     return Thingy;

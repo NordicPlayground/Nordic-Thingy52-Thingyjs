@@ -33,7 +33,7 @@ import FeatureOperations from "./FeatureOperations.js";
 
 class DFUControlPointService extends FeatureOperations {
   constructor(device) {
-    super(device, "dfucontrolpoint");
+    super(device, "dfucontrolpoint_v1");
 
     // gatt service and characteristic used to communicate with Thingy's dfu control point configuration
     this.service = {
@@ -41,7 +41,7 @@ class DFUControlPointService extends FeatureOperations {
     };
 
     this.characteristic = {
-      uuid: this.device.DFU_CTRL_POINT_UUID,
+      uuid: this.device.DFU_CTRL_POINT_UUID_VERSION_1,
       decoder: this.decodeDfuData.bind(this),
       encoder: this.encodeDfuData.bind(this),
     };
