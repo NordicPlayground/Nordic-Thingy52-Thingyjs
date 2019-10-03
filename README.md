@@ -1,4 +1,7 @@
 # Nordic Thingy:52 for Web Bluetooth
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/NordicPlayground/Nordic-Thingy52-Thingyjs.svg)](https://greenkeeper.io/)
+
 **About Thingy:52**
 
 The Nordic Thingy:52™ is a compact, power-optimized, multi-sensor development kit. It is an easy-to-use development platform, designed to help you build IoT prototypes and demos, without the need to build hardware or write firmware. Read more about it [here](https://www.nordicsemi.com/eng/Products/Nordic-Thingy-52).
