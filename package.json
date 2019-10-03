@@ -22,11 +22,11 @@
   "homepage": "https://github.com/NordicPlayground/Nordic-Thingy52-Thingyjs#readme",
   "dependencies": {},
   "devDependencies": {
-    "@types/text-encoding": "0.0.32",
+    "@types/text-encoding": "0.0.35",
     "@types/web-bluetooth": "0.0.4",
-    "babel-eslint": "^8.1.1",
-    "eslint": "^4.14.0",
-    "eslint-config-google": "^0.9.1",
-    "typescript": "^2.6.2"
+    "babel-eslint": "^10.0.3",
+    "eslint": "^6.5.1",
+    "eslint-config-google": "^0.14.0",
+    "typescript": "^3.6.3"
   }
 }
