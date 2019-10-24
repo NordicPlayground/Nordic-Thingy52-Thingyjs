@@ -19,6 +19,12 @@
           await device.connect();
           device.addEventListener("temperature", myLogger);
           await device.temperature.start();
+          await device.led.write({
+            mode: "breathe",
+            color: "red",
+            intensity: 50,
+            delay: 1000,
+          });
         } catch (error) {
           console.error(error);
         }
