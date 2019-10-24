@@ -30,6 +30,7 @@
  */
 
 import FeatureOperations from "./FeatureOperations.js";
+import { LEDPreviousValue } from "./LEDUtilities.js";
 
 class LEDService extends FeatureOperations {
   constructor(device) {
@@ -45,6 +46,8 @@ class LEDService extends FeatureOperations {
       decoder: this.decodeLedData.bind(this),
       encoder: this.encodeLedData.bind(this),
     };
+
+    this.previousValue = new LEDPreviousValue();
   }
 
   decodeLedData(data) {
@@ -83,14 +86,18 @@ class LEDService extends FeatureOperations {
         };
         break;
       }
+
+      this.previousValue.update(status);
+
       return status;
     } catch (error) {
       throw error;
     }
   }
 
-  encodeLedData(data) {
+  encodeLedData(newData) {
     try {
+      const data = this.previousValue.mixWith(newData);
       let dataArray;
 
       if (!data.mode) {
@@ -183,6 +190,8 @@ class LEDService extends FeatureOperations {
         break;
       }
       }
+
+      this.previousValue.update(newData);
 
       return dataArray;
     } catch (error) {
